@@ -1,0 +1,739 @@
+HomeoOpinion Portal   |   Product Requirements Document   |   v2.0 
+ 
+ 
+ 
+ 
+ 
+ 
+HomeoOpinion 
+AI-Powered Homoeopathic Second Opinion Portal 
+Enriched Product Requirements Document 
+ 
+Version 
+2.0 
+Date 
+May 2026 
+Status 
+Draft 
+Classification 
+Confidential 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Confidential  |  Page 1 
+HomeoOpinion Portal   |   Product Requirements Document   |   v2.0 
+1. Executive Summary 
+HomeoOpinion is a digital health portal designed to democratise access to qualified 
+homoeopathic second opinions. The platform connects patients who are seeking alternative or 
+supplementary medical perspectives with BHMS/MD(Hom.) registered practitioners across India 
+and globally. Patients upload lab reports, describe symptoms and medical history using 
+structured homoeopathic intake forms, and receive an AI-generated preliminary case analysis. 
+Licensed homoeopathic doctors then review the AI report, add their expert commentary, and 
+offer follow-up consultations (online or in-clinic). An administrative layer handles doctor 
+onboarding, case routing, compliance, and analytics. 
+ 
+The portal is purpose-built for homoeopathy, incorporating domain-specific concepts such as 
+constitutional case-taking, miasmatic assessment, modality capture, mental-emotional symptom 
+profiling, and repertorization support — none of which exist in generic telemedicine platforms. 
+ 
+2. Market Context and Opportunity 
+India has over 2,24,000 registered homoeopathic doctors, 195 undergraduate and 43 
+postgraduate colleges, and more than 7,800 government dispensaries offering homoeopathic 
+services. Despite this vast infrastructure, patients in tier-2 and tier-3 cities often struggle to 
+access specialist homoeopathic opinion, particularly in branches like psychiatry, paediatrics, and 
+constitutional prescribing. 
+ 
+The global medical second opinion market is experiencing rapid growth, with approximately 
+38% of patients now using virtual consultations for second opinions. AI-powered diagnostic 
+support is improving clinical precision by up to 20%, and 20% of clinicians already consult large 
+language models for supplementary opinions. The Indian government’s Telemedicine Practice 
+Guidelines (2020) explicitly cover Registered Homoeopathic Practitioners (RHPs), providing a 
+clear regulatory framework. This convergence of digital health adoption, regulatory clarity, and 
+an underserved patient population creates a strong opportunity for a homoeopathy-focused 
+second opinion portal. 
+ 
+3. Platform Architecture Overview 
+3.1 System Roles 
+Role 
+Description 
+Authentication 
+Patient (User) 
+Seeks homoeopathic second 
+opinion by uploading reports, 
+Google OAuth 2.0, optional 
+email/phone OTP 
+Confidential  |  Page 2 
+HomeoOpinion Portal   |   Product Requirements Document   |   v2.0 
+describing symptoms, and 
+optionally booking consultations 
+Doctor 
+Licensed BHMS/MD(Hom.) 
+practitioner who reviews cases, 
+adds expert analysis, and conducts 
+consultations 
+Credential-based login or Google 
+OAuth with admin-verified 
+registration 
+Admin 
+Platform operator who onboards 
+doctors, manages case routing, 
+monitors dashboards, and 
+enforces compliance 
+Credential-based login with MFA 
+ 
+3.2 High-Level Flow 
+1.​ Patient registers/logs in and creates a new case 
+2.​ Patient fills structured homoeopathic intake form and uploads lab reports/documents 
+3.​ AI engine generates a preliminary case analysis report (symptom extraction, possible 
+rubrics, constitutional indicators) 
+4.​ Case is routed to qualified doctors based on speciality tags and filters 
+5.​ Doctor reviews the AI report plus uploaded documents, adds expert comments and 
+recommendations 
+6.​ Patient receives notification that the report is ready (WhatsApp/email/SMS) 
+7.​ Patient reviews the report; if deeper consultation is desired, patient pays and books an 
+appointment 
+8.​ Doctor conducts consultation (video/audio/in-clinic), prescribes remedy, and documents 
+follow-up plan 
+9.​ Patient can return for follow-up appointments with the same doctor on the same case 
+ 
+4. User (Patient) Module 
+4.1 Registration and Authentication 
+•​
+Primary login via Google OAuth 2.0 for frictionless onboarding 
+•​
+Optional email or mobile OTP-based login for users without Google accounts 
+•​
+Profile creation: name, age, gender, city, preferred language (English, Hindi, regional) 
+•​
+Terms of service and informed consent for telemedicine (as per CCH Telemedicine 
+Practice Guidelines 2020) 
+•​
+Optional: link Aadhaar or ABHA (Ayushman Bharat Health Account) for future ABDM 
+integration 
+ 
+Confidential  |  Page 3 
+HomeoOpinion Portal   |   Product Requirements Document   |   v2.0 
+4.2 Homoeopathy-Specific Case Intake Form 
+Unlike generic medical platforms, HomeoOpinion captures data essential for homoeopathic 
+case analysis. The intake form is structured across the following sections: 
+ 
+4.2.1 Chief Complaint and History 
+•​
+Free-text description of current problem (what, when, how it started) 
+•​
+Duration and progression of symptoms 
+•​
+Any previous allopathic/homoeopathic/ayurvedic treatment taken and its effects 
+•​
+Family medical history (hereditary tendencies — relevant for miasmatic assessment) 
+•​
+Past significant illnesses, surgeries, vaccinations 
+ 
+4.2.2 Constitutional and Mental-Emotional Profile 
+This section captures the holistic picture that homoeopathic case-taking requires, going beyond 
+just physical symptoms: 
+•​
+Temperament and disposition (anxious, irritable, weepy, reserved, sociable, etc.) 
+•​
+Fears and phobias (darkness, being alone, heights, disease, death, thunder, etc.) 
+•​
+Sleep patterns: position, dreams (recurring themes), quality, disturbances 
+•​
+Emotional triggers and coping style 
+•​
+Response to consolation, sympathy, contradiction 
+•​
+Food cravings and aversions (salt, sweet, sour, spicy, eggs, meat, milk, etc.) 
+•​
+Thermal preference: chilly or warm-blooded patient 
+•​
+Thirst pattern: quantity, frequency, temperature preference 
+•​
+Perspiration: location, timing, odour 
+ 
+4.2.3 Modalities (Aggravating and Ameliorating Factors) 
+•​
+Time modalities: symptoms worse/better morning, evening, night, specific hours 
+•​
+Weather modalities: effect of heat, cold, humidity, storm, season change 
+•​
+Position modalities: sitting, standing, lying down, specific side 
+•​
+Activity: rest vs. motion, before/during/after exertion 
+•​
+Other: eating, pressure, touch, bathing, clothing 
+ 
+4.2.4 Speciality Tags and Routing 
+Users select one or more speciality tags to route their case to appropriately qualified doctors. 
+The tag taxonomy is aligned with MD(Hom.) specialisations recognised by the Central Council 
+of Homoeopathy: 
+ 
+Confidential  |  Page 4 
+HomeoOpinion Portal   |   Product Requirements Document   |   v2.0 
+Clinical Speciality 
+Academic Alignment 
+Example Conditions 
+General / Constitutional 
+Organon & Philosophy 
+Chronic constitutional cases, 
+miasmatic treatment 
+Skin & Dermatology 
+Practice of Medicine 
+Eczema, psoriasis, urticaria, 
+warts, acne 
+Paediatrics 
+MD Paediatrics 
+Childhood asthma, 
+behavioural issues, ADHD, 
+growth concerns 
+Mental Health / Psychiatry 
+MD Psychiatry 
+Anxiety, depression, OCD, 
+insomnia, phobias 
+Women’s Health / 
+Gynaecology 
+Practice of Medicine 
+PCOS, menstrual disorders, 
+menopause, infertility support 
+Respiratory 
+Practice of Medicine 
+Allergic rhinitis, asthma, 
+recurrent sinusitis, bronchitis 
+Gastroenterology 
+Practice of Medicine 
+IBS, acid reflux, chronic 
+constipation, liver disorders 
+Musculoskeletal / 
+Rheumatology 
+Practice of Medicine 
+Arthritis, spondylitis, sciatica, 
+fibromyalgia 
+Autoimmune Disorders 
+Practice of Medicine 
+Thyroid disorders, lupus, 
+vitiligo 
+Oncology Support 
+Practice of Medicine 
+Supportive/palliative care 
+alongside conventional 
+treatment 
+ 
+4.2.5 Document and Report Upload 
+•​
+Supported formats: PDF, JPEG, PNG, DICOM (for radiology images) 
+•​
+File size limit: 25 MB per file, 100 MB total per case 
+•​
+Document types: blood reports (CBC, LFT, KFT, thyroid panel, lipid profile, etc.), imaging 
+reports (X-ray, MRI, USG), previous prescriptions, discharge summaries 
+•​
+AI-powered OCR for extracting structured data from scanned lab reports 
+•​
+Drag-and-drop upload with preview and annotation capabilities 
+•​
+Document tagging: users can label each upload (e.g., “Blood Test – March 2026”, 
+“Previous Homoeopathic Prescription”) 
+ 
+4.3 AI-Generated Preliminary Report 
+The AI engine processes the intake form and uploaded documents to generate a preliminary 
+analysis. This is explicitly positioned as a decision-support tool, not a diagnosis, in compliance 
+with regulatory guidelines: 
+Confidential  |  Page 5 
+HomeoOpinion Portal   |   Product Requirements Document   |   v2.0 
+ 
+1.​ Symptom Extraction and Structuring: Converts free-text narrative into structured 
+symptom categories (mental, general, particular) following Kent’s hierarchy 
+2.​ Lab Report Parsing: Extracts key biomarkers, flags abnormal values, and presents them 
+alongside homoeopathic relevance notes 
+3.​ Rubric Suggestions: Maps reported symptoms to potential repertory rubrics (using 
+standard rubric language from Kent’s Repertory) 
+4.​ Constitutional Indicators: Based on the mental-emotional profile, food preferences, 
+thermal state, and modalities, suggests possible constitutional types for the doctor’s 
+consideration 
+5.​ Miasmatic Tendency: Based on family history and symptom patterns, indicates possible 
+predominant miasm (Psora, Sycosis, Syphilis, Tubercular) 
+6.​ Red Flag Alerts: Identifies symptoms requiring urgent conventional medical attention, 
+ensuring patient safety 
+ 
+Disclaimer prominently displayed: “This AI-generated report is a preliminary analysis tool to 
+assist qualified homoeopathic practitioners. It is not a diagnosis or prescription. All clinical 
+decisions rest with the reviewing doctor.” 
+ 
+4.4 Notification and Waiting 
+•​
+After submission, the user sees an estimated time for report readiness (configurable by 
+admin; default: 24–48 hours) 
+•​
+Push notification channels: WhatsApp (via Business API), email, SMS, in-app notification 
+•​
+Status tracking: Submitted → Under AI Processing → Awaiting Doctor Review → Report 
+Ready → Consultation Booked 
+•​
+User can check real-time status on their dashboard 
+ 
+4.5 Viewing Report and Booking Consultation 
+•​
+Report is presented in a clean, readable format with sections for AI analysis and doctor’s 
+expert comments 
+•​
+User reviews the report at no charge (or at a nominal platform fee — configurable) 
+•​
+If the user wants a live consultation, they proceed to payment and appointment booking 
+•​
+Payment gateway integration: Razorpay/PayU/Stripe with UPI, credit/debit card, net 
+banking, wallet support 
+•​
+Appointment types: video call (via integrated WebRTC or Jitsi), audio call, or in-clinic 
+visit (if doctor offers offline consultations) 
+•​
+Slot selection from the doctor’s available calendar 
+•​
+Consultation fees displayed upfront (set by doctor, optionally with platform commission) 
+ 
+Confidential  |  Page 6 
+HomeoOpinion Portal   |   Product Requirements Document   |   v2.0 
+4.6 Follow-Up and Case Continuity 
+•​
+Patient can return and book follow-up appointments on the same case with the same 
+doctor 
+•​
+Complete case history is maintained: all reports, doctor comments, prescriptions, and 
+consultation notes are chronologically threaded 
+•​
+Doctor can request updated lab reports or symptom updates before follow-up 
+•​
+Follow-up pricing can differ from initial consultation (configurable by doctor) 
+•​
+Prescription history with remedy name, potency, dosage, and repetition schedule 
+ 
+5. Doctor Module 
+5.1 Registration and Onboarding 
+•​
+Login via credentials (email + password) or Google OAuth 
+•​
+Registration requires admin verification before account activation 
+•​
+Required onboarding documents: BHMS degree certificate, MD(Hom.) certificate (if 
+applicable), CCH/State Board registration number, valid ID proof, passport-size 
+photograph 
+•​
+Admin verifies registration number against the National Register of Homoeopaths (NRH) 
+maintained by CCH 
+•​
+Doctor signs a platform agreement covering code of conduct, fee structure, and data 
+privacy obligations 
+ 
+5.2 Doctor Profile and Speciality Configuration 
+Each doctor’s profile serves as both a public-facing credential page and an internal routing filter: 
+ 
+Profile Field 
+Details 
+Qualifications 
+BHMS, MD(Hom.) with specialisation branch, any additional 
+certifications 
+Speciality Tags 
+Multiple selectable from the same taxonomy used in patient 
+intake (skin, psychiatry, paediatrics, etc.) 
+Prescribing Approach 
+Classical/Unicist, Pluralist, Complex, Organ-specific (for 
+patient transparency) 
+Experience 
+Years of practice, notable case areas, institutional affiliations 
+Languages 
+Languages spoken for consultation 
+Confidential  |  Page 7 
+HomeoOpinion Portal   |   Product Requirements Document   |   v2.0 
+Consultation Modes 
+Online (video/audio), offline (clinic address with map pin), or 
+both 
+Availability Calendar 
+Weekly slot configuration with buffer time between 
+appointments 
+Consultation Fees 
+Initial consultation fee, follow-up fee (set by doctor) 
+Ratings and Reviews 
+Aggregated patient ratings post-consultation 
+ 
+5.3 Case Dashboard and Review Workflow 
+1.​ Doctor sees a filtered queue of incoming cases matching their speciality tags 
+2.​ Each case card shows: patient demographics (anonymised until accepted), chief 
+complaint summary, speciality tags, AI confidence score, submission timestamp 
+3.​ Doctor can preview the AI-generated report and uploaded documents before accepting 
+the case 
+4.​ Upon accepting, the doctor gets full access to the patient’s case file 
+5.​ Doctor studies the case, cross-references with materia medica knowledge, and adds 
+structured comments: agreement/disagreement with AI suggestions, additional rubrics 
+identified, recommended remedies (with potency and rationale), suggested 
+investigations or lifestyle modifications, red flag observations 
+6.​ Doctor dispatches the completed report back to the patient 
+7.​ Case status updates to “Report Ready” and patient is notified 
+ 
+5.4 Consultation Management 
+•​
+Accept/decline appointment requests based on availability 
+•​
+Video consultation powered by WebRTC/Jitsi with screen sharing for reviewing reports 
+together 
+•​
+Consultation notes template with homoeopathic fields: remedy prescribed, potency, 
+dosage schedule, expected aggravation period, dietary restrictions, follow-up timeline 
+•​
+E-prescription generation compliant with CCH telemedicine guidelines 
+•​
+Digital prescription includes: patient name, age, date, remedy name in standard 
+nomenclature, potency, dose, frequency, duration, doctor’s registration number and 
+digital signature 
+ 
+5.5 Patient Search and Case History 
+•​
+Search patients by name, case ID, date range, speciality, or case status 
+•​
+View complete longitudinal case history for returning patients 
+•​
+Add ongoing notes to a patient’s case file across multiple consultations 
+•​
+Track treatment progress: symptom evolution timeline showing which symptoms 
+improved, appeared, or intensified after each prescription 
+Confidential  |  Page 8 
+HomeoOpinion Portal   |   Product Requirements Document   |   v2.0 
+ 
+5.6 Earnings and Payouts 
+•​
+Earnings credited upon completion of each consultation (not at booking — protects 
+patients) 
+•​
+Transparent earnings dashboard: per-consultation earnings, platform commission 
+deducted, net payout 
+•​
+Payout schedule: weekly or bi-weekly bank transfer via NEFT/IMPS 
+•​
+GST invoice generation for doctors (as applicable under Indian tax law) 
+•​
+Refund handling: if consultation does not occur due to doctor no-show, payment is fully 
+refunded to patient 
+ 
+6. Admin Module 
+6.1 Doctor Lifecycle Management 
+1.​ Onboarding: review submitted credentials, verify against NRH/State Board records, 
+approve or reject with reason 
+2.​ Active monitoring: track each doctor’s response time, case acceptance rate, patient 
+ratings, and complaint history 
+3.​ Off-boarding: suspend or permanently remove doctors with documented reasons; handle 
+pending cases and patient communication 
+ 
+6.2 Case Visibility and Routing Controls 
+•​
+Admin can control which doctors see which cases (e.g., restrict sensitive cases, route to 
+senior practitioners) 
+•​
+Auto-routing rules engine: match case speciality tags to doctor speciality tags with 
+configurable weighting 
+•​
+Manual override: admin can reassign a case to a specific doctor 
+•​
+Escalation workflow: if no doctor accepts a case within the SLA window, admin is alerted 
+to intervene 
+ 
+6.3 Analytics Dashboard 
+The admin dashboard provides real-time and historical views across the following metrics: 
+ 
+Metric Category 
+Key Indicators 
+Confidential  |  Page 9 
+HomeoOpinion Portal   |   Product Requirements Document   |   v2.0 
+Case Volume 
+Total cases submitted, cases by speciality, cases by 
+geography, daily/weekly/monthly trends 
+Resolution 
+Cases reviewed by doctors, average review time, cases 
+pending, cases escalated 
+Consultation 
+Total consultations booked, completed, cancelled, no-shows; 
+online vs. offline split 
+Financial 
+Total revenue, platform commission earned, doctor payouts, 
+refunds processed 
+User Engagement 
+Active users, returning users, drop-off rates at each funnel 
+stage, NPS scores 
+Doctor Performance 
+Avg. response time, acceptance rate, patient ratings, cases 
+per doctor 
+AI Performance 
+AI report accuracy (based on doctor agreement rate), rubric 
+suggestion relevance, red flag detection rate 
+ 
+6.4 User and Doctor Management 
+•​
+Block/suspend users for abuse, fake reports, or terms violation; with email notification 
+and appeal process 
+•​
+Block/suspend doctors for misconduct, consistently poor reviews, credential issues; with 
+formal notice 
+•​
+Bulk communication: send announcements, policy updates, or feature notifications to all 
+users or doctors 
+•​
+Content moderation: flag and review inappropriate comments or uploads 
+ 
+7. AI Engine Specifications 
+The AI layer is the core differentiator of HomeoOpinion. It is purpose-trained for homoeopathic 
+contexts, not a generic medical AI: 
+ 
+7.1 Capabilities 
+1.​ Lab Report OCR and Parser: Extract structured data from scanned blood/imaging 
+reports using computer vision and NLP. Handle Indian lab formats (Thyrocare, SRL, Dr 
+Lal PathLabs, etc.). 
+2.​ Symptom-to-Rubric Mapping: Map patient-described symptoms to standard 
+homoeopathic repertory rubrics. Support Kent’s Repertory rubric language as the 
+baseline, with extensibility for Synthesis and Complete Repertory. 
+Confidential  |  Page 10 
+HomeoOpinion Portal   |   Product Requirements Document   |   v2.0 
+3.​ Constitutional Profiling: Based on mental, general, and particular symptoms, suggest 
+possible constitutional remedy groups for the doctor’s consideration. 
+4.​ Miasmatic Analysis: Analyse family history patterns and current symptom characteristics 
+to suggest predominant miasmatic tendency (Psora, Sycosis, Syphilis, Tubercular). 
+5.​ Red Flag Detection: Identify emergency or serious symptoms (chest pain, neurological 
+deficits, suspected malignancies) that require urgent conventional medical attention, 
+regardless of the homoeopathic context. 
+6.​ Multi-lingual Support: Process intake forms in English, Hindi, and major regional 
+languages; output reports in the user’s preferred language. 
+ 
+7.2 Guardrails and Compliance 
+•​
+AI output is always labelled as “preliminary analysis” and “for practitioner review only” 
+•​
+AI never prescribes remedies or potencies directly to patients 
+•​
+Confidence scores accompany every AI suggestion, allowing doctors to gauge reliability 
+•​
+All AI outputs are logged and auditable for quality assurance and model improvement 
+•​
+Model bias monitoring: regular evaluation to ensure balanced performance across 
+demographics 
+ 
+8. Regulatory and Compliance Framework 
+8.1 Indian Regulations 
+•​
+CCH Telemedicine Practice Guidelines (2020) for Registered Homoeopathic 
+Practitioners: Governs all teleconsultation activity on the platform 
+•​
+Information Technology Act 2000 and IT Rules 2011: Data protection and intermediary 
+liability 
+•​
+Digital Personal Data Protection Act 2023 (DPDPA): Consent management, data 
+minimisation, purpose limitation, breach notification 
+•​
+Drugs and Cosmetics Act 1940: E-prescription compliance for homoeopathic medicines 
+•​
+Clinical Establishments Act 2010: If applicable to partner clinics offering offline 
+consultations 
+•​
+ABDM (Ayushman Bharat Digital Mission) standards: Future integration with national 
+health ID ecosystem 
+ 
+8.2 Data Protection Measures 
+•​
+All patient health information (PHI) encrypted at rest (AES-256) and in transit (TLS 1.3) 
+•​
+Role-based access control (RBAC): doctors see only cases assigned to them 
+•​
+Audit trails for all data access, modifications, and exports 
+Confidential  |  Page 11 
+HomeoOpinion Portal   |   Product Requirements Document   |   v2.0 
+•​
+Data residency: all primary data stored within India 
+•​
+Right to erasure: patients can request deletion of their data 
+•​
+Anonymisation for analytics and AI training datasets 
+•​
+Regular third-party security audits and penetration testing 
+ 
+9. Suggested Technical Architecture 
+Layer 
+Technology Options 
+Frontend (Web) 
+React.js / Next.js with Tailwind CSS; responsive PWA for 
+mobile-first experience 
+Frontend (Mobile) 
+React Native or Flutter for cross-platform iOS/Android apps 
+Backend API 
+Node.js (Express/NestJS) or Python (FastAPI/Django REST 
+Framework) 
+Database 
+PostgreSQL (primary), Redis (caching and session), 
+MongoDB (document/report storage) 
+AI/ML Pipeline 
+Python (LangChain/LlamaIndex for LLM orchestration), 
+fine-tuned models for homoeopathic NLP, OCR 
+(Tesseract/Google Vision API) 
+Video Consultation 
+Jitsi Meet (self-hosted, open source) or Twilio Video API 
+File Storage 
+AWS S3 / GCP Cloud Storage with server-side encryption 
+Notifications 
+WhatsApp Business API (Gupshup/Twilio), Firebase Cloud 
+Messaging, SendGrid (email), MSG91 (SMS) 
+Payment Gateway 
+Razorpay / PayU with UPI, cards, net banking, wallets 
+Authentication 
+Firebase Auth / Auth0 with Google OAuth, JWT tokens 
+Hosting 
+AWS (Mumbai region) / GCP (asia-south1) for data residency 
+compliance 
+CI/CD 
+GitHub Actions / GitLab CI with Docker containers, 
+Kubernetes orchestration 
+Monitoring 
+Grafana + Prometheus (infrastructure), Sentry (error 
+tracking), Mixpanel (product analytics) 
+ 
+10. Non-Functional Requirements 
+Confidential  |  Page 12 
+HomeoOpinion Portal   |   Product Requirements Document   |   v2.0 
+Attribute 
+Requirement 
+Performance 
+Page load < 2s; API response < 500ms (p95); AI report generation < 
+5 minutes 
+Scalability 
+Handle 10,000 concurrent users at launch, horizontally scalable to 
+100K+ 
+Availability 
+99.9% uptime SLA; multi-AZ deployment; automated failover 
+Accessibility 
+WCAG 2.1 AA compliance; multi-language UI; voice input support for 
+intake forms 
+Security 
+OWASP Top 10 compliance; annual VAPT; encrypted PHI; MFA for 
+admin/doctor roles 
+Disaster Recovery 
+RPO < 1 hour; RTO < 4 hours; daily automated backups with 
+cross-region replication 
+Audit 
+Complete audit log for all PHI access; tamper-proof log storage; 
+7-year retention 
+ 
+11. Phased Delivery Roadmap 
+Phase 1: MVP (Months 1–4) 
+•​
+Patient registration (Google OAuth) and basic case intake form 
+•​
+Document upload with basic AI report generation (symptom extraction + lab parsing) 
+•​
+Doctor onboarding (admin-verified) and case review workflow 
+•​
+WhatsApp/email notifications 
+•​
+Payment integration and basic video consultation 
+•​
+Admin dashboard with core metrics 
+ 
+Phase 2: Enhanced AI and Engagement (Months 5–8) 
+•​
+Full homoeopathic intake form (constitutional, mental-emotional, modalities) 
+•​
+Rubric suggestion engine and miasmatic analysis in AI reports 
+•​
+Doctor mobile app (React Native/Flutter) 
+•​
+Follow-up appointment and case continuity features 
+•​
+E-prescription generation 
+•​
+Multi-language support (Hindi + 2 regional languages) 
+ 
+Phase 3: Scale and Ecosystem (Months 9–12) 
+Confidential  |  Page 13 
+HomeoOpinion Portal   |   Product Requirements Document   |   v2.0 
+•​
+Advanced AI: constitutional profiling, red flag detection, treatment progress tracking 
+•​
+ABDM/ABHA integration for national health ID linkage 
+•​
+Patient mobile app with appointment reminders and remedy tracking 
+•​
+Doctor rating and review system 
+•​
+API marketplace for integration with homoeopathic pharmacy delivery services 
+•​
+Community features: anonymised case studies for doctor learning circles 
+ 
+12. Risk Matrix 
+Risk 
+Likelihood 
+Impact 
+Mitigation 
+Doctor adoption too 
+slow 
+Medium 
+High 
+Early engagement with 
+homoeopathic associations (IHO, 
+LIGA); seed with respected 
+practitioners 
+AI report inaccuracy 
+Medium 
+High 
+Mandatory doctor review before 
+patient sees report; continuous 
+feedback loop for model 
+improvement 
+Regulatory ambiguity 
+Low 
+High 
+Legal counsel specialised in AYUSH 
+regulation; design for CCH guideline 
+compliance from day one 
+Data breach 
+Low 
+Critical 
+Encryption, RBAC, regular security 
+audits, cyber insurance, incident 
+response plan 
+Patient misuse of AI 
+report 
+Medium 
+Medium 
+Clear disclaimers; AI never 
+prescribes directly; report gated 
+behind doctor review 
+Payment disputes 
+Medium 
+Low 
+Clear refund policy; escrow-style 
+payment release only after 
+consultation completion 
+ 
+13. Success Metrics (First 12 Months) 
+Metric 
+Target 
+Registered patients 
+10,000+ 
+Onboarded doctors 
+200+ verified BHMS/MD(Hom.) 
+Confidential  |  Page 14 
+HomeoOpinion Portal   |   Product Requirements Document   |   v2.0 
+Cases submitted 
+5,000+ 
+Doctor report turnaround 
+< 48 hours (avg.) 
+Consultations completed 
+2,000+ 
+Patient satisfaction (NPS) 
+> 50 
+Repeat consultation rate 
+> 30% 
+AI report doctor agreement 
+> 70% rubric relevance 
+ 
+ 
+End of Document — HomeoOpinion Product Requirements Document v2.0 
+Confidential  |  Page 15 

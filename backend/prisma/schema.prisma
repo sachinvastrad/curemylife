@@ -1,0 +1,471 @@
+// HomeoOpinion - Database Schema
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+// ==================== USERS ====================
+
+model Patient {
+  id             String    @id @default(uuid())
+  email          String?   @unique
+  phone          String?
+  name           String
+  age            Int?
+  gender         String?
+  city           String?
+  preferredLang  String    @default("en")
+  googleId       String?   @unique
+  abhaId         String?
+  avatarUrl      String?
+  isActive       Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  cases          Case[]
+  appointments   Appointment[]
+  prescriptions  Prescription[]
+  payments       Payment[]
+  reviews        DoctorReview[]
+  notifications  Notification[]
+
+  @@map("patients")
+}
+
+model Doctor {
+  id                  String    @id @default(uuid())
+  email               String    @unique
+  phone               String?
+  name                String
+  passwordHash        String?
+  googleId            String?   @unique
+  qualifications      String?   @db.Text
+  cchRegistrationNo   String
+  prescribingApproach String?   // classical, pluralist, complex, organ-specific
+  experienceYears     Int?
+  languages           Json?     // string[] — list of languages
+  consultationModes   Json?     // string[] — online, offline
+  clinicAddress       String?   @db.Text
+  clinicLat           Decimal?  @db.Decimal(10, 8)
+  clinicLng           Decimal?  @db.Decimal(11, 8)
+  initialFee          Decimal?  @db.Decimal(10, 2)
+  followupFee         Decimal?  @db.Decimal(10, 2)
+  photoUrl            String?
+  avgRating           Decimal   @default(0) @db.Decimal(3, 2)
+  totalReviews        Int       @default(0)
+  status              String    @default("pending") // pending, approved, suspended, rejected
+  rejectionReason     String?   @db.Text
+  verifiedAt          DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  specialities     DoctorSpeciality[]
+  assignedCases    Case[]            @relation("AssignedDoctor")
+  doctorReports    DoctorReport[]
+  availability     DoctorAvailability[]
+  appointments     Appointment[]
+  prescriptions    Prescription[]
+  paymentsReceived Payment[]
+  payouts          DoctorPayout[]
+  reviews          DoctorReview[]
+  onboardingDocs   DoctorDocument[]
+
+  @@map("doctors")
+}
+
+model Admin {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  mfaSecret    String?
+  mfaEnabled   Boolean  @default(false)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  @@map("admins")
+}
+
+// ==================== SPECIALITIES ====================
+
+model Speciality {
+  id            Int      @id @default(autoincrement())
+  name          String   @unique
+  academicAlign String?
+  description   String?  @db.Text
+  isActive      Boolean  @default(true)
+
+  doctors       DoctorSpeciality[]
+  cases         CaseSpeciality[]
+
+  @@map("specialities")
+}
+
+model DoctorSpeciality {
+  doctorId     String
+  specialityId Int
+
+  doctor       Doctor     @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  speciality   Speciality @relation(fields: [specialityId], references: [id])
+
+  @@id([doctorId, specialityId])
+  @@map("doctor_specialities")
+}
+
+// ==================== CASES ====================
+
+model Case {
+  id           String   @id @default(uuid())
+  patientId    String
+  caseNumber   String   @unique
+  status       String   @default("draft")
+  // statuses: draft, submitted, ai_processing, awaiting_doctor, report_ready,
+  //           consultation_booked, consultation_done, closed
+
+  // Chief Complaint
+  chiefComplaint     String?  @db.Text
+  durationValue      Int?
+  durationUnit       String?  // days, weeks, months, years
+  previousTreatments String?  @db.Text
+  familyHistory      String?  @db.Text
+  pastIllnesses      String?  @db.Text
+
+  // Constitutional Profile (Phase 2)
+  temperament          Json?     // string[]
+  fears                Json?     // string[]
+  sleepPosition        String?
+  sleepDreams          String?   @db.Text
+  sleepQuality         String?
+  sleepDisturbances    String?   @db.Text
+  emotionalTriggers    String?   @db.Text
+  consolationResponse  String?   @db.Text
+  foodCravings         Json?     // string[]
+  foodAversions        Json?     // string[]
+  thermalPreference    String?   // chilly, warm, neither
+  thirstQuantity       String?
+  thirstFrequency      String?
+  thirstTempPref       String?
+  perspirationLocation String?
+  perspirationTiming   String?
+  perspirationOdour    String?
+
+  // Modalities (Phase 2) - stored as JSON
+  modalities     Json?
+
+  assignedDoctorId   String?
+  submittedAt        DateTime?
+  aiCompletedAt      DateTime?
+  doctorAcceptedAt   DateTime?
+  reportDispatchedAt DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  patient        Patient        @relation(fields: [patientId], references: [id])
+  assignedDoctor Doctor?        @relation("AssignedDoctor", fields: [assignedDoctorId], references: [id])
+  specialities   CaseSpeciality[]
+  documents      CaseDocument[]
+  aiReports      AiReport[]
+  doctorReports  DoctorReport[]
+  appointments   Appointment[]
+  prescriptions  Prescription[]
+
+  @@map("cases")
+}
+
+model CaseSpeciality {
+  caseId       String
+  specialityId Int
+
+  case_        Case       @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  speciality   Speciality @relation(fields: [specialityId], references: [id])
+
+  @@id([caseId, specialityId])
+  @@map("case_specialities")
+}
+
+// ==================== DOCUMENTS ====================
+
+model CaseDocument {
+  id            String   @id @default(uuid())
+  caseId        String
+  fileName      String
+  fileType      String   // pdf, jpeg, png, dicom
+  fileSizeBytes BigInt
+  storageKey    String
+  label         String?
+  ocrText       String?  @db.Text
+  ocrConfidence Decimal? @db.Decimal(5, 2)
+  uploadedAt    DateTime @default(now())
+
+  case_         Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  @@map("case_documents")
+}
+
+model DoctorDocument {
+  id           String   @id @default(uuid())
+  doctorId     String
+  docType      String   // bhms_certificate, md_certificate, cch_registration, id_proof, photo
+  fileName     String
+  storageKey   String
+  uploadedAt   DateTime @default(now())
+
+  doctor       Doctor   @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+
+  @@map("doctor_documents")
+}
+
+// ==================== AI REPORTS ====================
+
+model AiReport {
+  id                  String   @id @default(uuid())
+  caseId              String
+  version             Int      @default(1)
+
+  // Symptom Extraction
+  mentalSymptoms      Json?
+  generalSymptoms     Json?
+  particularSymptoms  Json?
+
+  // Lab Parsing
+  parsedLabValues     Json?    // [{test, value, unit, referenceRange, isAbnormal}]
+
+  // Rubric Suggestions (Phase 2)
+  rubricSuggestions   Json?    // [{rubricText, confidence, sourceRepertory}]
+
+  // Constitutional (Phase 2)
+  constitutionalTypes Json?    // [{type, rationale, confidence}]
+
+  // Miasmatic (Phase 2)
+  predominantMiasm    String?
+  miasmRationale      String?  @db.Text
+  miasmConfidence     Decimal? @db.Decimal(5, 2)
+
+  // Red Flags (Phase 3)
+  redFlags            Json?    // [{symptom, severity, recommendation}]
+  hasRedFlags         Boolean  @default(false)
+
+  // Meta
+  overallConfidence   Decimal? @db.Decimal(5, 2)
+  processingTimeMs    Int?
+  modelVersion        String?
+  rawResponse         String?  @db.LongText // Full AI response for auditing
+  createdAt           DateTime @default(now())
+
+  case_               Case     @relation(fields: [caseId], references: [id])
+
+  @@map("ai_reports")
+}
+
+// ==================== DOCTOR REPORTS ====================
+
+model DoctorReport {
+  id                      String    @id @default(uuid())
+  caseId                  String
+  doctorId                String
+
+  aiAgreement             String?   // agree, partially_agree, disagree
+  aiAgreementNotes        String?   @db.Text
+  additionalObservations  String?   @db.Text
+  recommendedRubrics      Json?
+  recommendedRemedies     Json?     // [{remedy, potency, rationale}]
+  suggestedInvestigations String?   @db.Text
+  lifestyleModifications  String?   @db.Text
+  redFlagObservations     String?   @db.Text
+
+  dispatchedAt            DateTime?
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+
+  case_                   Case      @relation(fields: [caseId], references: [id])
+  doctor                  Doctor    @relation(fields: [doctorId], references: [id])
+
+  @@map("doctor_reports")
+}
+
+// ==================== APPOINTMENTS ====================
+
+model DoctorAvailability {
+  id              String  @id @default(uuid())
+  doctorId        String
+  dayOfWeek       Int     // 0=Sunday, 6=Saturday
+  startTime       String  // HH:mm format
+  endTime         String  // HH:mm format
+  slotDurationMin Int     @default(30)
+  bufferMin       Int     @default(10)
+  isActive        Boolean @default(true)
+
+  doctor          Doctor  @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+
+  @@map("doctor_availability")
+}
+
+model Appointment {
+  id                 String    @id @default(uuid())
+  caseId             String
+  patientId          String
+  doctorId           String
+  appointmentType    String    // video, audio, in_clinic
+  isFollowup         Boolean   @default(false)
+  scheduledDate      DateTime  @db.Date
+  scheduledStart     String    // HH:mm
+  scheduledEnd       String    // HH:mm
+  status             String    @default("booked") // booked, confirmed, in_progress, completed, cancelled, no_show
+  meetingLink        String?
+  consultationNotes  String?   @db.Text
+  durationMinutes    Int?
+  cancelledBy        String?   // patient, doctor, admin
+  cancellationReason String?   @db.Text
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  case_              Case     @relation(fields: [caseId], references: [id])
+  patient            Patient  @relation(fields: [patientId], references: [id])
+  doctor             Doctor   @relation(fields: [doctorId], references: [id])
+  payment            Payment?
+  prescriptions      Prescription[]
+  review             DoctorReview?
+
+  @@map("appointments")
+}
+
+// ==================== PRESCRIPTIONS ====================
+
+model Prescription {
+  id                   String   @id @default(uuid())
+  caseId               String
+  appointmentId        String?
+  doctorId             String
+  patientId            String
+  remedyName           String
+  potency              String
+  dosage               String
+  frequency            String
+  duration             String
+  dietaryRestrictions  String?  @db.Text
+  expectedAggravation  String?  @db.Text
+  followupTimeline     String?  @db.Text
+  digitalSignature     String?  @db.Text
+  pdfStorageKey        String?
+  createdAt            DateTime @default(now())
+
+  case_                Case        @relation(fields: [caseId], references: [id])
+  appointment          Appointment? @relation(fields: [appointmentId], references: [id])
+  doctor               Doctor      @relation(fields: [doctorId], references: [id])
+  patient              Patient     @relation(fields: [patientId], references: [id])
+
+  @@map("prescriptions")
+}
+
+// ==================== PAYMENTS ====================
+
+model Payment {
+  id                  String    @id @default(uuid())
+  appointmentId       String    @unique
+  patientId           String
+  doctorId            String
+  amount              Decimal   @db.Decimal(10, 2)
+  platformCommission  Decimal?  @db.Decimal(10, 2)
+  doctorPayout        Decimal?  @db.Decimal(10, 2)
+  currency            String    @default("INR")
+  gateway             String    @default("razorpay")
+  gatewayPaymentId    String?
+  gatewayOrderId      String?
+  status              String    @default("pending") // pending, captured, refunded, failed
+  refundReason        String?   @db.Text
+  paidAt              DateTime?
+  refundedAt          DateTime?
+  createdAt           DateTime  @default(now())
+
+  appointment         Appointment @relation(fields: [appointmentId], references: [id])
+  patient             Patient     @relation(fields: [patientId], references: [id])
+  doctor              Doctor      @relation(fields: [doctorId], references: [id])
+  payout              DoctorPayout? @relation(fields: [payoutId], references: [id])
+  payoutId            String?
+
+  @@map("payments")
+}
+
+model DoctorPayout {
+  id             String   @id @default(uuid())
+  doctorId       String
+  amount         Decimal  @db.Decimal(10, 2)
+  payoutMethod   String   @default("bank_transfer")
+  bankReference  String?
+  status         String   @default("pending") // pending, processing, completed, failed
+  periodStart    DateTime @db.Date
+  periodEnd      DateTime @db.Date
+  processedAt    DateTime?
+  createdAt      DateTime @default(now())
+
+  doctor         Doctor    @relation(fields: [doctorId], references: [id])
+  payments       Payment[]
+
+  @@map("doctor_payouts")
+}
+
+// ==================== NOTIFICATIONS ====================
+
+model Notification {
+  id        String    @id @default(uuid())
+  userId    String
+  userRole  String    // patient, doctor, admin
+  channel   String    // email, whatsapp, sms, in_app, push
+  type      String    // report_ready, appointment_booked, etc.
+  title     String
+  body      String    @db.Text
+  metadata  Json?
+  isRead    Boolean   @default(false)
+  sentAt    DateTime?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  patient   Patient?  @relation(fields: [userId], references: [id])
+
+  @@map("notifications")
+}
+
+// ==================== AUDIT ====================
+
+model AuditLog {
+  id           String   @id @default(uuid())
+  userId       String?
+  userRole     String?
+  action       String
+  resourceType String
+  resourceId   String?
+  details      Json?
+  ipAddress    String?
+  userAgent    String?  @db.Text
+  createdAt    DateTime @default(now())
+
+  @@index([userId])
+  @@index([resourceType, resourceId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// ==================== REVIEWS ====================
+
+model DoctorReview {
+  id              String    @id @default(uuid())
+  doctorId        String
+  patientId       String
+  appointmentId   String    @unique
+  rating          Int       // 1-5
+  reviewText      String?   @db.Text
+  doctorResponse  String?   @db.Text
+  isVisible       Boolean   @default(true)
+  moderatedBy     String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  doctor          Doctor      @relation(fields: [doctorId], references: [id])
+  patient         Patient     @relation(fields: [patientId], references: [id])
+  appointment     Appointment @relation(fields: [appointmentId], references: [id])
+
+  @@map("doctor_reviews")
+}

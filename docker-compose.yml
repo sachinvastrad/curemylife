@@ -1,0 +1,32 @@
+# HomeoOpinion local infrastructure.
+# Brings up PostgreSQL with a *named* volume so data survives container
+# removal, restarts, and Docker Desktop shutdowns.
+#
+#   docker compose up -d        # start the database
+#   docker compose down         # stop (data is kept in the named volume)
+#   docker compose down -v      # stop AND delete all data
+#
+# Credentials/port match backend/.env -> DATABASE_URL.
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: homeopinion-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: homeopinion
+    ports:
+      - "5433:5432"          # host 5433 -> container 5432 (see DATABASE_URL)
+    volumes:
+      - homeopinion_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d homeopinion"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+volumes:
+  homeopinion_pgdata:
+    name: homeopinion_pgdata

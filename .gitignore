@@ -1,0 +1,15 @@
+node_modules/
+.next/
+dist/
+.turbo/
+.env
+.env.local
+*.log
+.DS_Store
+coverage/
+
+# Secrets / local artifacts — never commit
+.tok.txt
+*.tok
+db-migrate-dump.sql
+.claude/
