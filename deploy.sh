@@ -101,13 +101,21 @@ log "3/4  Install deps & build"
 log "4/4  Deploy with pm2"
 command -v pm2 >/dev/null 2>&1 || npm install -g pm2
 
+# Resolve the compiled NestJS entrypoint (dist/main.js, or dist/src/main.js
+# on older builds) so pm2 always gets a valid path.
+if   [ -f "$APP_DIR/backend/dist/main.js" ];     then API_ENTRY="dist/main.js"
+elif [ -f "$APP_DIR/backend/dist/src/main.js" ]; then API_ENTRY="dist/src/main.js"
+else die "Backend build produced no main.js — check the 3/4 build output."
+fi
+echo "API entrypoint: backend/$API_ENTRY"
+
 cat > "$APP_DIR/ecosystem.config.js" <<EOF
 module.exports = {
   apps: [
     {
       name: "curemylife-api",
       cwd: "$APP_DIR/backend",
-      script: "dist/main.js",
+      script: "$API_ENTRY",
       env: {
         NODE_ENV: "production",
         PORT: "$API_PORT",
