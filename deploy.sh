@@ -57,12 +57,19 @@ command -v node >/dev/null || die "node not installed"
 command -v npm  >/dev/null || die "npm not installed"
 
 # ---- 1. PULL ----------------------------------------------
-log "1/4  Pull source from GitHub ($BRANCH)"
-if [ -d "$APP_DIR/.git" ]; then
-  git -C "$APP_DIR" fetch origin "$BRANCH"
-  git -C "$APP_DIR" reset --hard "origin/$BRANCH"
-else
-  git clone --branch "$BRANCH" "$REPO_URL" "$APP_DIR"
+# Done only on the first pass. Because the pull can replace deploy.sh
+# itself, we then re-exec the freshly pulled copy and continue from a
+# stable file (avoids the classic self-modification corruption).
+if [ -z "${DEPLOY_REEXEC:-}" ]; then
+  log "1/4  Pull source from GitHub ($BRANCH)"
+  if [ -d "$APP_DIR/.git" ]; then
+    git -C "$APP_DIR" fetch origin "$BRANCH"
+    git -C "$APP_DIR" reset --hard "origin/$BRANCH"
+  else
+    git clone --branch "$BRANCH" "$REPO_URL" "$APP_DIR"
+  fi
+  export DEPLOY_REEXEC=1
+  exec bash "$APP_DIR/deploy.sh" "$@"
 fi
 cd "$APP_DIR"
 
@@ -109,7 +116,10 @@ command -v pm2 >/dev/null 2>&1 || npm install -g pm2
 # on older builds) so pm2 always gets a valid path.
 if   [ -f "$APP_DIR/backend/dist/main.js" ];     then API_ENTRY="dist/main.js"
 elif [ -f "$APP_DIR/backend/dist/src/main.js" ]; then API_ENTRY="dist/src/main.js"
-else die "Backend build produced no main.js — check the 3/4 build output."
+else
+  echo "--- backend/dist tree ---" >&2
+  find "$APP_DIR/backend/dist" -name '*.js' 2>/dev/null | head -20 >&2 || echo "(dist missing)" >&2
+  die "Backend build produced no main.js (see tree above) — the 3/4 build failed."
 fi
 echo "API entrypoint: backend/$API_ENTRY"
 
@@ -150,8 +160,10 @@ module.exports = {
 };
 EOF
 
-# startOrReload = first run starts, redeploys reload with zero downtime
-pm2 startOrReload "$APP_DIR/ecosystem.config.js" --update-env
+# Delete any stale/errored app definitions so pm2 cannot reuse an old
+# cached script path — then start fresh from the regenerated ecosystem.
+pm2 delete curemylife-api curemylife-web >/dev/null 2>&1 || true
+pm2 start "$APP_DIR/ecosystem.config.js" --update-env
 pm2 save
 
 log "Done"
