@@ -3,51 +3,55 @@
 # CureMyLife — VPS deploy script (pull → configure → build → deploy)
 #
 # Usage on the VPS:
-#   ./deploy.sh                 # API on 9000, web on 3000
-#   ./deploy.sh 9000            # API on 9000 (port "onboarded" as arg 1)
-#   ./deploy.sh 9000 8080       # API on 9000, web on 8080
+#   ./deploy.sh                 # ports from deploy.config (or 9000/3000)
+#   ./deploy.sh 9000            # API 9000, web from config/default
+#   ./deploy.sh 9000 8080       # API 9000, web 8080
 #
-# First time only: copy just this file to the VPS and run it — it will
-# clone the repo itself. After that it lives inside the repo and self-updates.
+# Config lives in a SEPARATE git-ignored file `deploy.config` so it is
+# NOT overwritten when this script does `git reset --hard`. First run:
+#   cp deploy.config.example deploy.config && nano deploy.config
 #
 set -euo pipefail
 
-# ============================================================
-#  CONFIG  — edit these before the first run
-# ============================================================
-REPO_URL="https://github.com/sachinvastrad/curemylife.git"
-BRANCH="main"
-APP_DIR="${APP_DIR:-$HOME/curemylife}"      # where the repo lives on the VPS
+log() { echo -e "\n\033[1;36m== $* ==\033[0m"; }
+die() { echo -e "\033[1;31mERROR: $*\033[0m" >&2; exit 1; }
 
-VPS_IP="REPLACE_WITH_VPS_PUBLIC_IP"          # public IP/host users will hit
+# ---- Load config from git-ignored deploy.config -----------
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CONFIG_FILE="${DEPLOY_CONFIG:-$SCRIPT_DIR/deploy.config}"
 
-# MySQL (already installed on this VPS)
-DB_USER="homeo"
-DB_PASS="REPLACE_DB_PASSWORD"
-DB_HOST="127.0.0.1"
-DB_PORT="3306"
-DB_NAME="homeopinion"
+[ -f "$CONFIG_FILE" ] || die "Missing $CONFIG_FILE
+  Create it once (it is git-ignored, so it survives 'git reset --hard'):
+    cp \"$SCRIPT_DIR/deploy.config.example\" \"$CONFIG_FILE\"
+    nano \"$CONFIG_FILE\"      # fill in VPS_IP, DB_PASS, JWT secrets"
 
-# App secrets — set REAL values (the old .tok.txt JWT was leaked, do not reuse it)
-JWT_SECRET="REPLACE_JWT_SECRET"
-JWT_REFRESH_SECRET="REPLACE_JWT_REFRESH_SECRET"
-OPENAI_API_KEY=""                            # optional; blank = AI mock fallback
+# shellcheck disable=SC1090
+source "$CONFIG_FILE"
 
-# Ports — passed as args (default API 9000, web 3000)
-API_PORT="${1:-9000}"
-WEB_PORT="${2:-3000}"
-# ============================================================
-#  END CONFIG
-# ============================================================
+# Defaults for anything the config didn't set
+REPO_URL="${REPO_URL:-https://github.com/sachinvastrad/curemylife.git}"
+BRANCH="${BRANCH:-main}"
+APP_DIR="${APP_DIR:-$HOME/curemylife}"
+DB_HOST="${DB_HOST:-127.0.0.1}"
+DB_PORT="${DB_PORT:-3306}"
+DB_NAME="${DB_NAME:-homeopinion}"
+OPENAI_API_KEY="${OPENAI_API_KEY:-}"
+
+# Ports: CLI arg wins, then config, then hard default
+API_PORT="${1:-${API_PORT:-9000}}"
+WEB_PORT="${2:-${WEB_PORT:-3000}}"
+
+# Validate required values are present and not placeholders
+for v in VPS_IP DB_USER DB_PASS JWT_SECRET JWT_REFRESH_SECRET; do
+  val="${!v:-}"
+  { [ -n "$val" ] && [[ "$val" != REPLACE_* ]]; } \
+    || die "Set a real value for '$v' in $CONFIG_FILE"
+done
 
 API_PUBLIC_URL="http://${VPS_IP}:${API_PORT}"
 WEB_PUBLIC_URL="http://${VPS_IP}:${WEB_PORT}"
 DATABASE_URL="mysql://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}/${DB_NAME}"
 
-log() { echo -e "\n\033[1;36m== $* ==\033[0m"; }
-die() { echo -e "\033[1;31mERROR: $*\033[0m" >&2; exit 1; }
-
-[ "$VPS_IP" != "REPLACE_WITH_VPS_PUBLIC_IP" ] || die "Edit the CONFIG block first (VPS_IP, DB_PASS, JWT secrets)."
 command -v git  >/dev/null || die "git not installed"
 command -v node >/dev/null || die "node not installed"
 command -v npm  >/dev/null || die "npm not installed"

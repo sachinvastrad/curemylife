@@ -1,0 +1,35 @@
+# CureMyLife deploy config — copy to `deploy.config` and fill in real values.
+#
+#   cp deploy.config.example deploy.config
+#   nano deploy.config
+#
+# `deploy.config` is git-ignored, so your real secrets are NOT committed and
+# are NOT wiped when deploy.sh runs `git reset --hard`.
+
+# Where the repo lives on the VPS (must match where you run deploy.sh from)
+APP_DIR="$HOME/homeo"
+
+# Public IP/host users will hit (baked into the frontend at build time)
+VPS_IP="REPLACE_WITH_VPS_PUBLIC_IP"
+
+# MySQL (already installed on this VPS)
+DB_USER="homeo"
+DB_PASS="REPLACE_DB_PASSWORD"
+DB_HOST="127.0.0.1"
+DB_PORT="3306"
+DB_NAME="homeopinion"
+
+# App secrets — generate fresh: openssl rand -hex 32
+JWT_SECRET="REPLACE_JWT_SECRET"
+JWT_REFRESH_SECRET="REPLACE_JWT_REFRESH_SECRET"
+
+# Optional; blank = AI mock fallback
+OPENAI_API_KEY=""
+
+# Default ports (CLI args to deploy.sh override these)
+API_PORT="9000"
+WEB_PORT="3000"
+
+# Usually leave these as-is
+REPO_URL="https://github.com/sachinvastrad/curemylife.git"
+BRANCH="main"
