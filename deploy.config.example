@@ -26,6 +26,16 @@ JWT_REFRESH_SECRET="REPLACE_JWT_REFRESH_SECRET"
 # Optional; blank = AI mock fallback
 OPENAI_API_KEY=""
 
+# SMTP for real OTP emails. Leave USER/PASS blank = OTP logged to console only.
+# Gmail: host smtp.gmail.com, port 587, USER = full address,
+#        PASS = 16-char App Password (Google account > Security > App passwords;
+#        requires 2-Step Verification). NOT your normal Gmail password.
+SMTP_HOST="smtp.gmail.com"
+SMTP_PORT="587"
+SMTP_USER=""
+SMTP_PASS=""
+SMTP_FROM="CureMyLife <noreply@curemylife.com>"
+
 # Default ports (CLI args to deploy.sh override these)
 API_PORT="9000"
 WEB_PORT="3000"

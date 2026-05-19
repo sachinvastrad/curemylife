@@ -36,6 +36,11 @@ DB_HOST="${DB_HOST:-127.0.0.1}"
 DB_PORT="${DB_PORT:-3306}"
 DB_NAME="${DB_NAME:-homeopinion}"
 OPENAI_API_KEY="${OPENAI_API_KEY:-}"
+SMTP_HOST="${SMTP_HOST:-smtp.gmail.com}"
+SMTP_PORT="${SMTP_PORT:-587}"
+SMTP_USER="${SMTP_USER:-}"
+SMTP_PASS="${SMTP_PASS:-}"
+SMTP_FROM="${SMTP_FROM:-CureMyLife <noreply@curemylife.com>}"
 
 # Ports: CLI arg wins, then config, then hard default
 API_PORT="${1:-${API_PORT:-9000}}"
@@ -51,6 +56,10 @@ done
 API_PUBLIC_URL="http://${VPS_IP}:${API_PORT}"
 WEB_PUBLIC_URL="http://${VPS_IP}:${WEB_PORT}"
 DATABASE_URL="mysql://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}/${DB_NAME}"
+
+if [ -z "$SMTP_USER" ] || [ -z "$SMTP_PASS" ]; then
+  echo -e "\033[1;33mWARN: SMTP_USER/SMTP_PASS not set in $CONFIG_FILE — OTP emails will NOT be sent (logged to pm2 console only).\033[0m" >&2
+fi
 
 command -v git  >/dev/null || die "git not installed"
 command -v node >/dev/null || die "node not installed"
@@ -89,6 +98,11 @@ OPENAI_API_KEY="$OPENAI_API_KEY"
 AI_MODEL="gpt-4o"
 UPLOAD_DIR="./uploads"
 MAX_FILE_SIZE=26214400
+SMTP_HOST="$SMTP_HOST"
+SMTP_PORT="$SMTP_PORT"
+SMTP_USER="$SMTP_USER"
+SMTP_PASS="$SMTP_PASS"
+SMTP_FROM="$SMTP_FROM"
 EOF
 
 # NEXT_PUBLIC_* is baked into the frontend bundle at BUILD time
@@ -142,7 +156,12 @@ module.exports = {
         OPENAI_API_KEY: "$OPENAI_API_KEY",
         AI_MODEL: "gpt-4o",
         UPLOAD_DIR: "./uploads",
-        MAX_FILE_SIZE: "26214400"
+        MAX_FILE_SIZE: "26214400",
+        SMTP_HOST: "$SMTP_HOST",
+        SMTP_PORT: "$SMTP_PORT",
+        SMTP_USER: "$SMTP_USER",
+        SMTP_PASS: "$SMTP_PASS",
+        SMTP_FROM: "$SMTP_FROM"
       }
     },
     {
