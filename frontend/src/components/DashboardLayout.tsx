@@ -1,10 +1,12 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import {
   LayoutDashboard, FileText, Calendar, CreditCard, User, LogOut,
-  Stethoscope, Users, BarChart3, ClipboardList, Settings, PlusCircle, Pill
+  Stethoscope, Users, BarChart3, ClipboardList, PlusCircle, Pill,
+  Menu, X,
 } from 'lucide-react';
 
 interface NavItem { href: string; label: string; icon: any; }
@@ -38,6 +40,10 @@ const adminNav: NavItem[] = [
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user, logout } = useAuth();
+  const [open, setOpen] = useState(false);
+
+  // Close the mobile drawer whenever the route changes (tap a link → close menu).
+  useEffect(() => { setOpen(false); }, [pathname]);
 
   const getNav = (): NavItem[] => {
     if (pathname.startsWith('/patient')) return patientNav;
@@ -51,8 +57,48 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="flex min-h-screen" style={{ background: 'var(--bg-dark)' }}>
-      {/* Sidebar */}
-      <aside className="sidebar">
+      {/* Mobile top bar — visible only below md breakpoint */}
+      <header
+        className="md:hidden fixed top-0 left-0 right-0 flex items-center justify-between px-4 py-3"
+        style={{
+          background: 'var(--bg-card)',
+          borderBottom: '1px solid var(--border)',
+          zIndex: 50,
+        }}
+      >
+        <Link href="/" className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-md flex items-center justify-center"
+            style={{ background: 'linear-gradient(135deg, var(--primary), var(--primary-light))' }}>
+            <Stethoscope className="w-4 h-4 text-white" />
+          </div>
+          <span className="font-bold text-sm">
+            Homeo<span style={{ color: 'var(--primary-light)' }}>Opinion</span>
+          </span>
+        </Link>
+        <button
+          type="button"
+          onClick={() => setOpen(v => !v)}
+          aria-label={open ? 'Close menu' : 'Open menu'}
+          aria-expanded={open}
+          className="p-2 rounded-md"
+          style={{ color: 'var(--text-primary)' }}
+        >
+          {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+        </button>
+      </header>
+
+      {/* Dimmer overlay — mobile only, click anywhere outside the drawer to close */}
+      {open && (
+        <div
+          className="md:hidden fixed inset-0"
+          style={{ background: 'rgba(0,0,0,0.5)', zIndex: 30 }}
+          onClick={() => setOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Sidebar — globals.css translates it off-screen on mobile, .open slides it back in */}
+      <aside className={`sidebar ${open ? 'open' : ''}`}>
         <div className="px-6 mb-8">
           <Link href="/" className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg flex items-center justify-center"
@@ -72,6 +118,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <nav className="flex-1">
           {nav.map((item) => (
             <Link key={item.href} href={item.href}
+              onClick={() => setOpen(false)}
               className={`sidebar-link ${pathname === item.href ? 'active' : ''}`}>
               <item.icon className="w-4 h-4" />
               {item.label}
@@ -93,8 +140,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
       </aside>
 
-      {/* Content */}
-      <main className="main-content flex-1">
+      {/* Content — extra top padding on mobile to clear the fixed header */}
+      <main className="main-content flex-1 pt-16 md:pt-0">
         {children}
       </main>
     </div>
