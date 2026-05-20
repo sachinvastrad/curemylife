@@ -64,7 +64,7 @@ export default function PatientProfilePage() {
         )}
 
         <div className="card">
-          <div className="grid grid-cols-2 gap-4 mb-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
             <div>
               <label className="label">Full Name *</label>
               <input className="input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
@@ -75,7 +75,7 @@ export default function PatientProfilePage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 mb-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
             <div>
               <label className="label">Gender</label>
               <select className="input" value={form.gender} onChange={(e) => setForm({ ...form, gender: e.target.value })}>
