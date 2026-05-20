@@ -141,7 +141,9 @@ export default function NewCasePage() {
               <textarea className="input" rows={4}
                 placeholder="What is your main health concern? When did it start? How has it progressed?"
                 value={chiefComplaint} onChange={(e) => setChiefComplaint(e.target.value)} />
-              <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>Minimum 50 characters</p>
+              <p className="text-xs mt-1" style={{ color: chiefComplaint.length >= 50 ? 'var(--success)' : 'var(--text-muted)' }}>
+                {chiefComplaint.length}/50 characters {chiefComplaint.length >= 50 ? '✓' : 'minimum'}
+              </p>
             </div>
 
             <div className="grid grid-cols-2 gap-4 mb-4">
@@ -198,6 +200,19 @@ export default function NewCasePage() {
                 ))}
               </div>
             </div>
+
+            {(() => {
+              const missing: string[] = [];
+              if (chiefComplaint.length < 50) missing.push(`describe your problem in at least 50 characters (currently ${chiefComplaint.length})`);
+              if (selectedSpecialities.length === 0) missing.push('tap at least one Speciality Tag above');
+              return missing.length > 0 ? (
+                <div className="mb-3 p-3 rounded-lg text-xs flex items-start gap-2"
+                  style={{ background: 'rgba(234,179,8,0.1)', color: 'var(--warning, #d97706)' }}>
+                  <Info className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                  <span>To continue, please: {missing.join(' and ')}.</span>
+                </div>
+              ) : null;
+            })()}
 
             <div className="flex justify-end">
               <button className="btn btn-primary"
