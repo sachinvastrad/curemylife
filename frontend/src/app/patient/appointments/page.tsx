@@ -206,6 +206,11 @@ export default function PatientAppointmentsPage() {
               />
             </div>
 
+            {!reviewRating && (
+              <div className="mb-3 p-3 rounded-lg text-xs" style={{ background: 'rgba(234,179,8,0.1)', color: 'var(--warning, #d97706)' }}>
+                Tap a star above to rate your consultation before submitting.
+              </div>
+            )}
             <div className="flex gap-3">
               <button className="btn btn-ghost flex-1" onClick={() => setReviewTarget(null)}>Cancel</button>
               <button

@@ -183,6 +183,20 @@ export default function DoctorAppointmentsPage() {
                   onChange={e => setPrescriptionForm({...prescriptionForm, followupTimeline: e.target.value})} />
               </div>
 
+              {(() => {
+                const missing = [
+                  !prescriptionForm.remedyName && 'Remedy Name',
+                  !prescriptionForm.potency && 'Potency',
+                  !prescriptionForm.dosage && 'Dosage',
+                  !prescriptionForm.frequency && 'Frequency',
+                  !prescriptionForm.duration && 'Duration',
+                ].filter(Boolean) as string[];
+                return missing.length > 0 ? (
+                  <div className="mb-3 p-3 rounded-lg text-xs" style={{ background: 'rgba(234,179,8,0.1)', color: 'var(--warning, #d97706)' }}>
+                    Please fill the required field{missing.length > 1 ? 's' : ''}: {missing.join(', ')}.
+                  </div>
+                ) : null;
+              })()}
               <div className="flex justify-end gap-3">
                 <button className="btn btn-ghost" onClick={() => setActiveAppointment(null)}>Cancel</button>
                 <button className="btn btn-primary" disabled={submittingPrescription || !prescriptionForm.remedyName || !prescriptionForm.potency || !prescriptionForm.dosage || !prescriptionForm.frequency || !prescriptionForm.duration} onClick={handleIssuePrescription}>

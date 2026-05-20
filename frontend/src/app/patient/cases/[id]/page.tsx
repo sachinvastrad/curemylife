@@ -291,6 +291,11 @@ export default function PatientCaseDetailPage() {
               )}
             </div>
 
+            {!selectedSlot && (
+              <div className="mb-3 p-3 rounded-lg text-xs" style={{ background: 'rgba(234,179,8,0.1)', color: 'var(--warning, #d97706)' }}>
+                Select an available time slot above to confirm your booking.
+              </div>
+            )}
             <div className="flex gap-3">
               <button className="btn btn-ghost flex-1" onClick={() => setShowBooking(false)}>Cancel</button>
               <button

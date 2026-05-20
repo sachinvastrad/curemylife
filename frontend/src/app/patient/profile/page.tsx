@@ -101,6 +101,11 @@ export default function PatientProfilePage() {
             </select>
           </div>
 
+          {!form.name && (
+            <div className="mb-3 p-3 rounded-lg text-xs" style={{ background: 'rgba(234,179,8,0.1)', color: 'var(--warning, #d97706)' }}>
+              Full Name is required before you can save your profile.
+            </div>
+          )}
           <button className="btn btn-primary" disabled={loading || !form.name} onClick={handleSave}>
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             Save Profile
