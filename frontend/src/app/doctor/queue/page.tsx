@@ -101,7 +101,7 @@ export default function DoctorQueuePage() {
                 value={reviewForm.recommendedRemedies}
                 onChange={(e) => setReviewForm({ ...reviewForm, recommendedRemedies: e.target.value })} />
             </div>
-            <div className="grid grid-cols-2 gap-4 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <div>
                 <label className="label">Suggested Investigations</label>
                 <textarea className="input" rows={2} value={reviewForm.suggestedInvestigations}

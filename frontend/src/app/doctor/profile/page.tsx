@@ -245,7 +245,7 @@ export default function DoctorProfilePage() {
             ) : (
               <div className="space-y-3 mb-6">
                 {availability.map((slot, idx) => (
-                  <div key={idx} className="grid grid-cols-5 gap-2 items-center p-3 rounded-lg"
+                  <div key={idx} className="grid grid-cols-2 sm:grid-cols-5 gap-2 items-center p-3 rounded-lg"
                     style={{ background: 'var(--bg-surface)' }}>
                     <select className="input text-sm" value={slot.dayOfWeek}
                       onChange={(e) => updateSlot(idx, 'dayOfWeek', parseInt(e.target.value))}>

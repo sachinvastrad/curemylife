@@ -140,7 +140,7 @@ export default function DoctorAppointmentsPage() {
             <div className="card w-full max-w-2xl max-h-[90vh] overflow-y-auto" style={{ background: 'var(--bg-dark)' }}>
               <h2 className="text-xl font-bold mb-4">Issue Prescription for {activeAppointment.patient?.name}</h2>
               
-              <div className="grid grid-cols-2 gap-4 mb-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                 <div>
                   <label className="label">Remedy Name *</label>
                   <input className="input" placeholder="e.g. Nux Vomica" value={prescriptionForm.remedyName} 
@@ -153,7 +153,7 @@ export default function DoctorAppointmentsPage() {
                 </div>
               </div>
               
-              <div className="grid grid-cols-3 gap-4 mb-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
                 <div>
                   <label className="label">Dosage *</label>
                   <input className="input" placeholder="e.g. 4 pills" value={prescriptionForm.dosage} 
