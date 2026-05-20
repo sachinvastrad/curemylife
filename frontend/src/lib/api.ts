@@ -54,6 +54,11 @@ export const authApi = {
   getProfile: () => api.get('/api/auth/profile'),
 };
 
+// Public — no auth required (used by doctor register and patient new-case)
+export const specialitiesApi = {
+  listPublic: () => api.get('/api/specialities'),
+};
+
 // ==================== CASES ====================
 export const casesApi = {
   create: (data: any) => api.post('/api/cases', data),

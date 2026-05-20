@@ -200,6 +200,11 @@ export class AuthService {
         cchRegistrationNo: dto.cchRegistrationNo,
         qualifications: dto.qualifications,
         status: 'pending',
+        ...(dto.specialityIds && dto.specialityIds.length > 0 && {
+          specialities: {
+            create: dto.specialityIds.map((id) => ({ specialityId: id })),
+          },
+        }),
       },
     });
 

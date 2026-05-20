@@ -3,7 +3,7 @@ import DashboardLayout from '@/components/DashboardLayout';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
-import { doctorsApi } from '@/lib/api';
+import { doctorsApi, specialitiesApi } from '@/lib/api';
 import { User, Save, Loader2, Star, Plus, X } from 'lucide-react';
 
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -26,6 +26,8 @@ export default function DoctorProfilePage() {
     initialFee: '',
     followupFee: '',
   });
+  const [allSpecialities, setAllSpecialities] = useState<{ id: number; name: string }[]>([]);
+  const [selectedSpecialityIds, setSelectedSpecialityIds] = useState<number[]>([]);
 
   useEffect(() => {
     if (!authLoading && (!user || user.role !== 'doctor')) router.push('/login?role=doctor');
@@ -37,12 +39,14 @@ export default function DoctorProfilePage() {
 
   const loadProfile = async () => {
     try {
-      const [profileRes, availRes] = await Promise.all([
+      const [profileRes, availRes, specRes] = await Promise.all([
         doctorsApi.getProfile(),
         doctorsApi.getAvailability(),
+        specialitiesApi.listPublic(),
       ]);
       setProfile(profileRes.data);
       setAvailability(availRes.data);
+      setAllSpecialities(specRes.data);
       const p = profileRes.data;
       setForm({
         name: p.name || '',
@@ -54,11 +58,18 @@ export default function DoctorProfilePage() {
         initialFee: p.initialFee?.toString() || '',
         followupFee: p.followupFee?.toString() || '',
       });
+      setSelectedSpecialityIds((p.specialities || []).map((s: any) => s.specialityId ?? s.speciality?.id));
     } catch (e) {
       console.error(e);
     } finally {
       setLoading(false);
     }
+  };
+
+  const toggleSpeciality = (id: number) => {
+    setSelectedSpecialityIds(ids =>
+      ids.includes(id) ? ids.filter(x => x !== id) : [...ids, id]
+    );
   };
 
   const handleSaveProfile = async () => {
@@ -73,6 +84,7 @@ export default function DoctorProfilePage() {
         clinicAddress: form.clinicAddress,
         initialFee: form.initialFee ? parseFloat(form.initialFee) : undefined,
         followupFee: form.followupFee ? parseFloat(form.followupFee) : undefined,
+        specialityIds: selectedSpecialityIds,
       });
       await loadProfile();
     } catch (e) {
@@ -203,6 +215,30 @@ export default function DoctorProfilePage() {
               <input className="input w-full" value={form.languages}
                 onChange={(e) => setForm({ ...form, languages: e.target.value })}
                 placeholder="e.g. English, Hindi, Kannada" />
+            </div>
+
+            <div className="mb-6">
+              <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-muted)' }}>
+                Specialities (tap to select / unselect)
+              </label>
+              {allSpecialities.length === 0 ? (
+                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Loading…</p>
+              ) : (
+                <div className="flex flex-wrap gap-2 mt-1">
+                  {allSpecialities.map(s => (
+                    <button type="button" key={s.id}
+                      onClick={() => toggleSpeciality(s.id)}
+                      className={`badge cursor-pointer transition-all ${selectedSpecialityIds.includes(s.id) ? 'badge-primary' : 'badge-neutral'}`}>
+                      {s.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {selectedSpecialityIds.length === 0 && (
+                <p className="text-xs mt-2" style={{ color: 'var(--warning, #d97706)' }}>
+                  Select at least one speciality so cases can be routed to you.
+                </p>
+              )}
             </div>
 
             <div className="mb-6">

@@ -1,8 +1,8 @@
 'use client';
-import { useState, Suspense } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Stethoscope, Mail, Lock, User, Phone, ArrowLeft, Loader2 } from 'lucide-react';
-import { authApi } from '@/lib/api';
+import { authApi, specialitiesApi } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
 import Link from 'next/link';
 
@@ -33,6 +33,19 @@ function LoginContent() {
   // Admin
   const [adminEmail, setAdminEmail] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
+
+  // Doctor registration: speciality picker
+  const [specialities, setSpecialities] = useState<{ id: number; name: string }[]>([]);
+  const [selectedSpecialityIds, setSelectedSpecialityIds] = useState<number[]>([]);
+
+  // Load specialities once when register tab opens (doctor role + signup tab)
+  useEffect(() => {
+    if (role === 'doctor' && tab === 'signup' && specialities.length === 0) {
+      specialitiesApi.listPublic()
+        .then(({ data }) => setSpecialities(data))
+        .catch(() => { /* leave empty; UI will show a hint */ });
+    }
+  }, [role, tab]);
 
   const handlePatientOtpRequest = async () => {
     setLoading(true); setError('');
@@ -70,12 +83,19 @@ function LoginContent() {
   const handleDoctorRegister = async () => {
     setLoading(true); setError('');
     try {
-      const { data } = await authApi.doctorRegister(doctorForm);
+      const { data } = await authApi.doctorRegister({ ...doctorForm, specialityIds: selectedSpecialityIds });
       setSuccess(data.message);
       setTab('login');
+      setSelectedSpecialityIds([]);
     } catch (e: any) {
       setError(e.response?.data?.message || 'Registration failed');
     } finally { setLoading(false); }
+  };
+
+  const toggleSpeciality = (id: number) => {
+    setSelectedSpecialityIds(ids =>
+      ids.includes(id) ? ids.filter(x => x !== id) : [...ids, id]
+    );
   };
 
   const handleAdminLogin = async () => {
@@ -240,7 +260,42 @@ function LoginContent() {
                       value={doctorForm.qualifications}
                       onChange={(e) => setDoctorForm({ ...doctorForm, qualifications: e.target.value })} />
                   </div>
-                  <button className="btn btn-primary w-full" disabled={loading} onClick={handleDoctorRegister}>
+
+                  {/* Speciality tags — required, at least one */}
+                  <div className="mb-4">
+                    <label className="label">Specialities * <span style={{ color: 'var(--text-muted)' }} className="font-normal text-xs">(tap to select one or more)</span></label>
+                    {specialities.length === 0 ? (
+                      <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Loading specialities…</p>
+                    ) : (
+                      <div className="flex flex-wrap gap-2 mt-1">
+                        {specialities.map(s => (
+                          <button type="button" key={s.id}
+                            onClick={() => toggleSpeciality(s.id)}
+                            className={`badge cursor-pointer transition-all ${selectedSpecialityIds.includes(s.id) ? 'badge-primary' : 'badge-neutral'}`}>
+                            {s.name}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {(() => {
+                    const missing: string[] = [];
+                    if (!doctorForm.name) missing.push('Full Name');
+                    if (!doctorForm.email) missing.push('Email');
+                    if (!doctorForm.password || doctorForm.password.length < 8) missing.push('Password (min 8 chars)');
+                    if (!doctorForm.cchRegistrationNo) missing.push('CCH Registration Number');
+                    if (selectedSpecialityIds.length === 0) missing.push('at least one Speciality');
+                    return missing.length > 0 ? (
+                      <div className="mb-3 p-3 rounded-lg text-xs" style={{ background: 'rgba(234,179,8,0.1)', color: 'var(--warning, #d97706)' }}>
+                        To register, please fill: {missing.join(', ')}.
+                      </div>
+                    ) : null;
+                  })()}
+
+                  <button className="btn btn-primary w-full"
+                    disabled={loading || !doctorForm.name || !doctorForm.email || !doctorForm.password || doctorForm.password.length < 8 || !doctorForm.cchRegistrationNo || selectedSpecialityIds.length === 0}
+                    onClick={handleDoctorRegister}>
                     {loading && <Loader2 className="w-4 h-4 animate-spin" />}
                     Register & Await Verification
                   </button>

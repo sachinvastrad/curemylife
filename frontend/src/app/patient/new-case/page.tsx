@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import DashboardLayout from '@/components/DashboardLayout';
-import { casesApi, adminApi } from '@/lib/api';
+import { casesApi, specialitiesApi } from '@/lib/api';
 import { Loader2, Upload, X, Info } from 'lucide-react';
 
 export default function NewCasePage() {
@@ -39,7 +39,7 @@ export default function NewCasePage() {
 
   const loadSpecialities = async () => {
     try {
-      const { data } = await adminApi.getSpecialities();
+      const { data } = await specialitiesApi.listPublic();
       setSpecialities(data);
     } catch {
       // Fallback specialities

@@ -1,4 +1,4 @@
-import { IsEmail, IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
+import { IsArray, IsEmail, IsInt, IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
 
 export class PatientGoogleLoginDto {
   @IsString()
@@ -74,6 +74,11 @@ export class DoctorRegisterDto {
   @IsOptional()
   @IsString()
   qualifications?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsInt({ each: true })
+  specialityIds?: number[];
 }
 
 export class DoctorLoginDto {
