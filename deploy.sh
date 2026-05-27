@@ -120,6 +120,16 @@ log "3/4  Install deps & build"
 
 ( cd frontend
   npm ci
+
+  # Verify animation deps resolved — these are required by the GSAP/Lenis
+  # integration in src/providers and src/lib/animation. If either is missing
+  # the build still succeeds (Next 16 won't fail on a client-only import path
+  # until first render), so check explicitly.
+  for dep in gsap lenis; do
+    [ -f "node_modules/$dep/package.json" ] \
+      || die "Frontend dependency '$dep' missing after npm ci — check package.json and the lockfile."
+  done
+
   NEXT_PUBLIC_API_URL="$API_PUBLIC_URL" npm run build )   # -> frontend/.next
 
 # ---- 4. DEPLOY (pm2) --------------------------------------

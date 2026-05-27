@@ -273,3 +273,14 @@ select.input {
   .sidebar.open { transform: translateX(0); }
   .main-content { margin-left: 0; padding: 1rem; }
 }
+
+/* === Lenis (animation integration) === */
+html.lenis, html.lenis body { height: auto; }
+.lenis.lenis-smooth { scroll-behavior: auto !important; }
+.lenis.lenis-smooth [data-lenis-prevent] { overscroll-behavior: contain; }
+.lenis.lenis-stopped { overflow: clip; }
+.lenis.lenis-smooth iframe { pointer-events: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto !important; }
+}
