@@ -164,18 +164,20 @@ Files:
 - [x] Update `DashboardLayout` sidebar — add `Services` for admin
 - [x] Commit: `Phase 6 — Admin catalog UI`
 
-### Phase 7 — Booking flow hookup + doctor context  `[x]`
+### Phase 7 — Booking flow hookup + doctor context  `[x]` (commit `aeafd56`)
 - [x] Patient booking page accepts `serviceRequestId` + filters doctors by service.specialities
 - [x] Appointment create call sends `serviceRequestId` (sets ServiceRequest.status='booked')
 - [x] Doctor appointment view shows service name + intake summary when present
 - [x] Commit: `Phase 7 — Booking + doctor context`
 
 ### Phase 8 — Polish + edge cases  `[x]`
-- [x] Empty-state for /patient/services
-- [x] 404 for disabled or deleted slug
-- [x] Disabled-button reasons (matches recent UX work)
-- [x] Audit log entries for admin mutations
-- [x] Commit: `Phase 8 — Polish + audit + edge cases`
+Most polish items were inlined during earlier phases:
+- [x] Empty-state for /patient/services (Phase 5)
+- [x] 404 for disabled or deleted slug (Phase 5 landing page)
+- [x] Disabled-button reasons in IntakeFormRenderer + ServiceForm + booking page
+- [x] Audit log entries for admin mutations (Phase 2 — `writeAudit` on create/update/toggle/delete)
+- [x] Symmetric `ServiceRequest.status = 'completed'` on appointment completion
+- [x] No further commit needed — all in earlier batches
 
 ---
 

@@ -177,15 +177,20 @@ export class AppointmentsService {
       },
     });
 
-    // Update case status (skipped for service-originated appointments)
+    // Update container status — only one side applies
     if (appt.caseId) {
       await this.prisma.case.update({
         where: { id: appt.caseId },
         data: { status: 'consultation_done' },
       });
+    } else if (appt.serviceRequestId) {
+      await this.prisma.serviceRequest.update({
+        where: { id: appt.serviceRequestId },
+        data: { status: 'completed' },
+      });
     }
 
-    // Mark payment as captured
+    // Mark payment as captured (service appointments are free in v1 → no-op)
     await this.prisma.payment.updateMany({
       where: { appointmentId, status: 'pending' },
       data: { status: 'captured', paidAt: new Date() },
