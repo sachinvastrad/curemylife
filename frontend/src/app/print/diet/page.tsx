@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { dietApi } from '@/lib/api';
 
@@ -13,7 +13,7 @@ const SLOT_LABELS: { [k: string]: string } = {
 };
 const SLOTS = ['early_morning', 'breakfast', 'mid_morning', 'lunch', 'evening_snack', 'dinner', 'bedtime'];
 
-export default function PrintDietPage() {
+function PrintDietInner() {
   const searchParams = useSearchParams();
   const chartId = searchParams.get('chartId');
   const patientId = searchParams.get('patientId');
@@ -313,5 +313,13 @@ export default function PrintDietPage() {
         </div>
       </div>
     </>
+  );
+}
+
+export default function PrintDietPage() {
+  return (
+    <Suspense fallback={<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}><p>Loading...</p></div>}>
+      <PrintDietInner />
+    </Suspense>
   );
 }

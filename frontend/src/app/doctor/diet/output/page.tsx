@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import DashboardLayout from '@/components/DashboardLayout';
@@ -179,7 +179,7 @@ function FoodChip({
 
 // ===================== MAIN PAGE =====================
 
-export default function DietOutputPage() {
+function DietOutputInner() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -583,5 +583,13 @@ export default function DietOutputPage() {
         />
       )}
     </DashboardLayout>
+  );
+}
+
+export default function DietOutputPage() {
+  return (
+    <Suspense fallback={<div className="flex justify-center py-20"><div className="spinner" /></div>}>
+      <DietOutputInner />
+    </Suspense>
   );
 }

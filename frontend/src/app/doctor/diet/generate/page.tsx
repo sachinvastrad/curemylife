@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import DashboardLayout from '@/components/DashboardLayout';
@@ -185,7 +185,7 @@ function BmiDisplay({ heightCm, weightKg }: { heightCm: number; weightKg: number
 
 // ===================== MAIN PAGE =====================
 
-export default function DietGeneratePage() {
+function DietGenerateInner() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -528,5 +528,13 @@ export default function DietGeneratePage() {
         </div>
       </div>
     </DashboardLayout>
+  );
+}
+
+export default function DietGeneratePage() {
+  return (
+    <Suspense fallback={<div className="flex justify-center py-20"><div className="spinner" /></div>}>
+      <DietGenerateInner />
+    </Suspense>
   );
 }
