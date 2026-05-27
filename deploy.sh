@@ -115,7 +115,10 @@ log "3/4  Install deps & build"
 ( cd backend
   npm ci
   npx prisma generate
-  npx prisma db push            # create/update MySQL tables (no migrations folder)
+  # Applies additive schema changes (new tables, new columns, nullable flips).
+  # v1.1 adds: services, service_specialities, service_requests; makes
+  # appointments.caseId nullable + adds appointments.serviceRequestId.
+  npx prisma db push
   npm run db:seed-diet          # upsert foods / recipes / templates (safe to re-run)
   npm run build )               # -> backend/dist/main.js
 
@@ -196,6 +199,26 @@ pm2 delete curemylife-api curemylife-web >/dev/null 2>&1 || true
 pm2 start "$APP_DIR/ecosystem.config.js" --update-env
 pm2 save
 
+# ---- 5. POST-DEPLOY HEALTH CHECK --------------------------
+# Wait for the API to actually bind (pm2 start returns before the Nest app
+# has finished bootstrapping). Probe the Service Catalog endpoint —
+# unauthenticated requests should be rejected with 401, which is enough to
+# confirm the route is registered (i.e. ServicesModule loaded cleanly).
+log "5/5  Health check"
+HEALTH_OK=""
+for i in $(seq 1 15); do
+  code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 3 "http://127.0.0.1:${API_PORT}/api/services" || echo "000")
+  if [ "$code" = "401" ] || [ "$code" = "200" ]; then
+    HEALTH_OK=1
+    echo "API healthy after ${i}s (HTTP $code from /api/services)"
+    break
+  fi
+  sleep 1
+done
+if [ -z "$HEALTH_OK" ]; then
+  echo -e "\033[1;33mWARN: API did not respond to /api/services within 15s — check 'pm2 logs curemylife-api'.\033[0m" >&2
+fi
+
 log "Done"
 echo "API : $API_PUBLIC_URL/api"
 echo "Web : $WEB_PUBLIC_URL"
@@ -203,6 +226,11 @@ echo
 echo "  pm2 status            # process list"
 echo "  pm2 logs curemylife-api"
 echo "  pm2 logs curemylife-web"
+echo
+echo "Service Catalog (v1.1) is live:"
+echo "  Admin manage : $WEB_PUBLIC_URL/admin/services"
+echo "  Patient view : $WEB_PUBLIC_URL/patient/services"
+echo "  (Admin must create + enable at least one service before patients see anything.)"
 echo
 echo "To start on boot (run ONCE, as root, the command pm2 prints):"
 echo "  pm2 startup"

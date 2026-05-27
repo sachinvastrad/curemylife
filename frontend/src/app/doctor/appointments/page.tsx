@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import DashboardLayout from '@/components/DashboardLayout';
 import { appointmentsApi, prescriptionsApi } from '@/lib/api';
-import { Calendar, Video, Clock, Loader2, Pill } from 'lucide-react';
+import { Calendar, Video, Clock, Loader2, Pill, Sparkles, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
 
 export default function DoctorAppointmentsPage() {
@@ -106,8 +106,11 @@ export default function DoctorAppointmentsPage() {
                         Case Reference: {a.case_.caseNumber}
                       </p>
                     )}
+                    {a.serviceRequest?.service && (
+                      <ServiceContext appointment={a} />
+                    )}
                   </div>
-                  
+
                   <div className="flex flex-col gap-2 min-w-[200px]">
                     {a.status === 'booked' && (
                       <button className="btn btn-primary w-full" onClick={() => handleStartConsultation(a.id)}>
@@ -119,9 +122,19 @@ export default function DoctorAppointmentsPage() {
                         <a href={a.meetingLink || '#'} target="_blank" rel="noreferrer" className="btn btn-secondary w-full text-center">
                           Join Video Call
                         </a>
-                        <button className="btn btn-success w-full" onClick={() => setActiveAppointment(a)}>
-                          <Pill className="w-4 h-4" /> Issue Prescription
-                        </button>
+                        {a.case_ ? (
+                          <button className="btn btn-success w-full" onClick={() => setActiveAppointment(a)}>
+                            <Pill className="w-4 h-4" /> Issue Prescription
+                          </button>
+                        ) : (
+                          <button
+                            className="btn btn-success w-full"
+                            onClick={() => appointmentsApi.complete(a.id, 'Service consultation completed').then(loadAppointments)}
+                            title="Service consultations don't require a prescription in v1"
+                          >
+                            <CheckCircle2 className="w-4 h-4" /> Mark Completed
+                          </button>
+                        )}
                       </>
                     )}
                     {a.status === 'completed' && (
@@ -209,5 +222,46 @@ export default function DoctorAppointmentsPage() {
         )}
       </div>
     </DashboardLayout>
+  );
+}
+
+/**
+ * Service context block — surfaces what the patient booked + the intake answers
+ * so the doctor knows what to prepare for. Rendered only when the appointment
+ * came from the Service Catalog (not the core case flow).
+ */
+function ServiceContext({ appointment }: { appointment: any }) {
+  const sr = appointment.serviceRequest;
+  const fields = (sr?.service?.intakeFields ?? []) as { key: string; label: string }[];
+  const payload = (sr?.intakePayload ?? {}) as Record<string, unknown>;
+  const entries = fields
+    .map((f) => ({ label: f.label, value: payload[f.key] }))
+    .filter((e) => e.value !== undefined && e.value !== '' && !(Array.isArray(e.value) && e.value.length === 0));
+
+  return (
+    <div
+      className="mt-3 p-3 rounded-lg"
+      style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}
+    >
+      <div className="flex items-center gap-2 mb-2">
+        <Sparkles className="w-4 h-4" style={{ color: 'var(--primary-light)' }} />
+        <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+          {sr.service.name}
+        </span>
+        <span className="badge badge-primary text-xs">Service</span>
+      </div>
+      {entries.length > 0 ? (
+        <dl className="text-xs space-y-1" style={{ color: 'var(--text-secondary)' }}>
+          {entries.map((e) => (
+            <div key={e.label} className="flex gap-2">
+              <dt className="font-medium shrink-0" style={{ color: 'var(--text-muted)' }}>{e.label}:</dt>
+              <dd>{Array.isArray(e.value) ? e.value.join(', ') : String(e.value)}</dd>
+            </div>
+          ))}
+        </dl>
+      ) : (
+        <p className="text-xs" style={{ color: 'var(--text-muted)' }}>No intake details provided.</p>
+      )}
+    </div>
   );
 }
