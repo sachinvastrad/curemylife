@@ -156,6 +156,29 @@ export const reviewsApi = {
     api.get(`/api/reviews/doctors/${doctorId}`, { params: { page } }),
 };
 
+// ==================== SERVICE CATALOG ====================
+export const servicesApi = {
+  // Patient (authenticated) — catalog browse
+  listEnabled: () => api.get('/api/services'),
+  getBySlug: (slug: string) => api.get(`/api/services/slug/${slug}`),
+
+  // Admin
+  adminList: () => api.get('/api/services/admin/all'),
+  adminGet: (id: string) => api.get(`/api/services/admin/${id}`),
+  adminCreate: (data: any) => api.post('/api/services/admin', data),
+  adminUpdate: (id: string, data: any) => api.put(`/api/services/admin/${id}`, data),
+  adminToggle: (id: string, isEnabled: boolean) =>
+    api.post(`/api/services/admin/${id}/toggle`, { isEnabled }),
+  adminDelete: (id: string) => api.delete(`/api/services/admin/${id}`),
+};
+
+export const serviceRequestsApi = {
+  create: (data: { serviceId: string; intakePayload: unknown; notes?: string }) =>
+    api.post('/api/service-requests', data),
+  getMine: () => api.get('/api/service-requests/my'),
+  getById: (id: string) => api.get(`/api/service-requests/${id}`),
+};
+
 // ==================== ADMIN ====================
 export const adminApi = {
   getDashboard: (from?: string, to?: string) =>

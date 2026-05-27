@@ -133,7 +133,7 @@ Files:
 - [x] Register `ServicesModule` in `app.module.ts`
 - [x] Commit: `Phase 2 — Services backend module`
 
-### Phase 3 — Backend: ServiceRequests + Appointment integration  `[x]`
+### Phase 3 — Backend: ServiceRequests + Appointment integration  `[x]` (commit `82ee341`)
 - [x] `backend/src/service-requests/service-requests.module.ts`
 - [x] `backend/src/service-requests/service-requests.controller.ts`
 - [x] `backend/src/service-requests/service-requests.service.ts`
