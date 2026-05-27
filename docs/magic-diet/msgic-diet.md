@@ -1,0 +1,1 @@
+I created a magic-diet folder in that I have detailed requirement about the 
