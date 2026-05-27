@@ -169,4 +169,86 @@ export const adminApi = {
     api.post(`/api/admin/patients/${id}/toggle`, { isActive }),
 };
 
+// ==================== MAGIC DIET ====================
+export const dietApi = {
+  // Foods
+  searchFoods: (q?: string, category?: string, veg?: string) =>
+    api.get('/api/diet/foods', { params: { q, category, veg } }),
+  getFoodById: (id: string) => api.get(`/api/diet/foods/${id}`),
+
+  // Recipes
+  searchRecipes: (slot?: string, cuisine?: string) =>
+    api.get('/api/diet/recipes', { params: { slot, cuisine } }),
+
+  // Templates
+  getTemplates: (goal?: string, diet?: string, age?: string, condition?: string) =>
+    api.get('/api/diet/templates', { params: { goal, diet, age, condition } }),
+  getTemplateById: (id: string) => api.get(`/api/diet/templates/${id}`),
+  createTemplate: (data: any) => api.post('/api/diet/templates', data),
+  updateTemplate: (id: string, data: any) => api.patch(`/api/diet/templates/${id}`, data),
+  cloneTemplate: (id: string, newName?: string) =>
+    api.post(`/api/diet/templates/${id}/clone`, { newName }),
+
+  // Generate
+  generate: (data: {
+    patientId: string;
+    heightCm?: number;
+    weightKg?: number;
+    targetWeightKg?: number;
+    age?: number;
+    gender?: string;
+    activityLevel?: string;
+    dietType?: string;
+    fastingWindow?: string;
+    cuisineRegion?: string;
+    budgetTier?: string;
+    cookingTimeTier?: string;
+    allergens?: string[];
+    foodDislikes?: string[];
+    diseaseTags?: string[];
+    biomarkers?: { marker: string; value: number; unit: string; measuredAt?: string }[];
+    medications?: string[];
+    pregnancyStatus?: string;
+    ayurvedicPrakriti?: string;
+    persist?: boolean;
+    templateId?: string;
+  }) => api.post('/api/diet/generate', data),
+
+  // Swap
+  swap: (data: {
+    fromFoodId: string;
+    slot?: string;
+    allergens?: string[];
+    dislikes?: string[];
+    diseases?: string[];
+    dietType?: string;
+  }) => api.post('/api/diet/swap', data),
+
+  // Charts
+  saveChart: (data: any) => api.post('/api/diet/charts', data),
+  updateChart: (id: string, data: any) => api.patch(`/api/diet/charts/${id}`, data),
+  getCharts: (patientId?: string, page?: number, limit?: number) =>
+    api.get('/api/diet/charts', { params: { patientId, page, limit } }),
+  getChartById: (id: string) => api.get(`/api/diet/charts/${id}`),
+  deleteChart: (id: string) => api.delete(`/api/diet/charts/${id}`),
+
+  // Biomarkers
+  createBiomarker: (data: {
+    patientId: string;
+    visitId?: string;
+    marker: string;
+    value: number;
+    unit: string;
+    measuredAt: string;
+  }) => api.post('/api/diet/biomarkers', data),
+  getBiomarkers: (patientId?: string) =>
+    api.get('/api/diet/biomarkers', { params: { patientId } }),
+  getLatestBiomarkers: (patientId?: string) =>
+    api.get('/api/diet/biomarkers/latest', { params: { patientId } }),
+
+  // Patient diet profile
+  updatePatientDietProfile: (patientId: string, data: any) =>
+    api.put(`/api/diet/patient-profile/${patientId}`, data),
+};
+
 export default api;

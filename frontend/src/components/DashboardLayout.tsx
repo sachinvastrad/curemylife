@@ -6,7 +6,7 @@ import { useAuth } from '@/lib/auth-context';
 import {
   LayoutDashboard, FileText, Calendar, CreditCard, User, LogOut,
   Stethoscope, Users, BarChart3, ClipboardList, PlusCircle, Pill,
-  Menu, X,
+  Menu, X, Zap,
 } from 'lucide-react';
 
 interface NavItem { href: string; label: string; icon: any; }
@@ -17,6 +17,7 @@ const patientNav: NavItem[] = [
   { href: '/patient/cases', label: 'My Cases', icon: FileText },
   { href: '/patient/appointments', label: 'Appointments', icon: Calendar },
   { href: '/patient/prescriptions', label: 'Prescriptions', icon: Pill },
+  { href: '/patient/diet', label: 'Diet Plans', icon: Zap },
   { href: '/patient/profile', label: 'Profile', icon: User },
 ];
 
@@ -25,6 +26,8 @@ const doctorNav: NavItem[] = [
   { href: '/doctor/queue', label: 'Case Queue', icon: ClipboardList },
   { href: '/doctor/cases', label: 'My Cases', icon: FileText },
   { href: '/doctor/appointments', label: 'Appointments', icon: Calendar },
+  { href: '/doctor/diet/generate', label: 'Magic Diet', icon: Zap },
+  { href: '/doctor/diet/templates', label: 'Diet Templates', icon: FileText },
   { href: '/doctor/earnings', label: 'Earnings', icon: CreditCard },
   { href: '/doctor/profile', label: 'Profile', icon: User },
 ];

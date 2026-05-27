@@ -25,12 +25,59 @@ model Patient {
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
+  // ---- Magic Diet fields ----
+  // Anthropometry
+  heightCm           Float?
+  currentWeightKg    Float?
+  targetWeightKg     Float?
+  waistCm            Float?
+  hipCm              Float?
+
+  // Activity & lifestyle
+  activityLevel      String?   // sedentary, light, moderate, heavy, athlete
+  exerciseMinsWeek   Int?
+  occupation         String?
+  avgStepsPerDay     Int?
+  sleepHoursAvg      Float?
+  stressLevel        String?   // low, moderate, high
+  waterIntakeL       Float?
+  caffeineCupsDay    Int?
+  alcoholFreq        String?   // never, occasional, weekly, daily
+  tobaccoUse         Boolean?
+  eatOutFreq         String?   // rarely, weekly, daily
+
+  // Diet profile
+  dietType           String?   // VEG, NON_VEG, EGGETARIAN, VEGAN, JAIN, SATVIK
+  allergens          Json?     // string[] e.g. ["milk","peanut"]
+  foodIntolerances   Json?     // string[]
+  foodDislikes       Json?     // string[]
+  foodLoves          Json?     // string[]
+  religiousTags      Json?     // string[]
+  fastingWindow      String?   // none, 12:12, 14:10, 16:8, OMAD, 5:2
+
+  // Reproductive
+  pregnancyStatus    String?   // none, planning, t1, t2, t3, lactating_0_6, lactating_6_12, postpartum
+  menopauseStatus    String?   // pre, peri, post
+
+  // Constitutional
+  ayurvedicPrakriti  String?   // vata, pitta, kapha, vata_pitta, pitta_kapha, vata_kapha, tridoshic
+
+  // Regional & cooking
+  macroRegion        String?
+  state              String?
+  cuisineRegion      String?
+  budgetTier         String?   // bare_minimum, economy, standard, premium, no_constraint
+  cookingTimeTier    String?   // le10, le20, le45, no_limit
+  householdSize      Int?
+
   cases          Case[]
   appointments   Appointment[]
   prescriptions  Prescription[]
   payments       Payment[]
   reviews        DoctorReview[]
   notifications  Notification[]
+  biomarkers     PatientBiomarker[]
+  dietCharts     PatientDietChart[]
 
   @@map("patients")
 }
@@ -468,4 +515,210 @@ model DoctorReview {
   appointment     Appointment @relation(fields: [appointmentId], references: [id])
 
   @@map("doctor_reviews")
+}
+
+// ==================== MAGIC DIET ====================
+
+model Food {
+  id                  String   @id @default(uuid())
+  name                String
+  nameLocal           Json?    // {hi: "...", kn: "...", ta: "..."}
+  category            String   // CEREAL_MILLET, PULSE_LEGUME, DAIRY, EGG, FLESH_FOOD, NUT_OILSEED, FAT_OIL, VEGETABLE, GLV, ROOT_TUBER, FRUIT, SPICE, BEVERAGE, PROCESSED, OTHER
+  subCategory         String?
+  vegType             String   // VEG, EGG, NON_VEG, VEGAN, JAIN
+  cuisineRegions      Json?    // string[]
+  // Nutrition per 100g raw (IFCT-2017)
+  kcalPer100g         Float
+  proteinGPer100g     Float    @default(0)
+  carbGPer100g        Float    @default(0)
+  fatGPer100g         Float    @default(0)
+  fiberGPer100g       Float    @default(0)
+  sugarGPer100g       Float    @default(0)
+  sodiumMgPer100g     Float    @default(0)
+  potassiumMgPer100g  Float    @default(0)
+  calciumMgPer100g    Float    @default(0)
+  ironMgPer100g       Float    @default(0)
+  vitaminAUgPer100g   Float    @default(0)
+  vitaminCMgPer100g   Float    @default(0)
+  vitaminDUgPer100g   Float    @default(0)
+  vitaminB12UgPer100g Float    @default(0)
+  folateUgPer100g     Float    @default(0)
+  omega3GPer100g      Float    @default(0)
+  giIndex             Int?     // 0–100 Glycemic Index
+  glycemicLoadPer100g Float?
+  // Metadata
+  allergens           Json?    // string[]
+  fodmapLevel         String?  // low, moderate, high
+  diseaseAllowed      Json?    // string[] tag whitelist
+  diseaseRestricted   Json?    // string[] tag blacklist
+  seasonality         Json?    // int[] months 1–12
+  costTier            String   @default("standard") // economy, standard, premium
+  unitCostInr         Float?
+  defaultPortionG     Float    @default(100)
+  defaultPortionDesc  String?
+  prepTimeMin         Int      @default(0)
+  mealSlots           Json?    // string[] e.g. ["breakfast","lunch"]
+  // Disease-specific flags (0=none, 1=moderate, 2=high)
+  oxalateLevel        Int      @default(0)
+  purineLevel         Int      @default(0)
+  sodiumLevel         Int      @default(0)
+  goitrogenFlag       Boolean  @default(false)
+  tyramineFlag        Boolean  @default(false)
+  vitaminKHighFlag    Boolean  @default(false)
+  source              String   @default("IFCT-2017")
+  isActive            Boolean  @default(true)
+  createdAt           DateTime @default(now())
+
+  recipeIngredients   RecipeIngredient[]
+  substitutionFrom    FoodSubstitution[] @relation("SubFromFood")
+  substitutionTo      FoodSubstitution[] @relation("SubToFood")
+
+  @@index([category])
+  @@index([vegType])
+  @@map("foods")
+}
+
+model Recipe {
+  id               String   @id @default(uuid())
+  name             String
+  cuisine          String?  // karnataka, north_indian, south_indian, etc.
+  mealSlots        Json     // string[]
+  vegType          String   // VEG, EGG, NON_VEG, VEGAN, JAIN
+  prepTimeMin      Int      @default(20)
+  difficulty       String   @default("easy") // easy, medium, hard
+  servingsBase     Int      @default(1)
+  kcalPerServing   Float
+  proteinGPerServing Float  @default(0)
+  carbGPerServing  Float    @default(0)
+  fatGPerServing   Float    @default(0)
+  fiberGPerServing Float    @default(0)
+  giEstimate       Int?
+  instructions     String?  @db.Text
+  mustPairWith     Json?    // string[] recipe ids
+  tags             Json?    // string[] e.g. ["low-gi","high-protein"]
+  conditionTags    Json?    // string[] disease tags this recipe suits
+  costTier         String   @default("standard")
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+
+  ingredients      RecipeIngredient[]
+
+  @@map("recipes")
+}
+
+model RecipeIngredient {
+  id        String @id @default(uuid())
+  recipeId  String
+  foodId    String
+  qtyG      Float  // raw grams per servingsBase
+  note      String?
+
+  recipe    Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  food      Food   @relation(fields: [foodId], references: [id])
+
+  @@map("recipe_ingredients")
+}
+
+model FoodSubstitution {
+  id              String  @id @default(uuid())
+  fromFoodId      String
+  toFoodId        String
+  contextSlot     String? // breakfast, lunch, dinner, snack — null = any
+  reason          String? // lactose, allergy, preference, nutrition_similarity
+  similarityScore Float   @default(0.5) // 0–1
+
+  fromFood        Food    @relation("SubFromFood", fields: [fromFoodId], references: [id])
+  toFood          Food    @relation("SubToFood", fields: [toFoodId], references: [id])
+
+  @@index([fromFoodId])
+  @@map("food_substitutions")
+}
+
+model DietTemplate {
+  id                    String   @id @default(uuid())
+  clinicId              String?  // NULL = global NIN template
+  name                  String
+  description           String?  @db.Text
+  // Classification
+  dietType              String   // VEG, NON_VEG, EGGETARIAN, VEGAN, JAIN, SATVIK, ANY
+  ageGroup              String   // INFANT,TODDLER,CHILD,TEEN,ADULT,ELDERLY,PREGNANT,LACTATING,ANY
+  goal                  String   // weight_loss, weight_gain, diabetes_management, heart_health, pcos, ckd, etc.
+  conditionTags         Json?    // string[] disease tags
+  cuisineRegions        Json?    // string[]
+  // Calorie & macro targets
+  targetKcal            Int?
+  macroSplit            Json?    // {carbs_pct, protein_pct, fat_pct}
+  proteinPerKg          Float?
+  giCap                 Int?     // max GI per item
+  saltCapG              Float?
+  addedSugarCapG        Float?
+  oilCapMl              Float?
+  potassiumCapMg        Float?
+  waterTargetL          Float?
+  // Slot distribution
+  slotDistribution      Json?    // {early_morning:3, breakfast:22, ...} in %
+  // Allowed / avoid foods
+  allowedFoods          Json?    // string[] food IDs or names
+  avoidFoods            Json?    // string[] food IDs or names
+  lifestyleNotes        String?  @db.Text
+  supplementHints       String?  @db.Text
+  requiresDietitianReview Boolean @default(false)
+  source                String   @default("NIN-2024")
+  isActive              Boolean  @default(true)
+  createdBy             String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  dietCharts            PatientDietChart[]
+
+  @@index([goal])
+  @@index([dietType])
+  @@map("diet_templates")
+}
+
+model PatientBiomarker {
+  id          String   @id @default(uuid())
+  patientId   String
+  visitId     String?  // optional link to appointment
+  marker      String   // hba1c, fbs, ldl, hdl, tg, tsh, hb, ferritin, egfr, uric_acid, bp_sys, bp_dia, vit_d, b12
+  value       Float
+  unit        String   // %, mg/dL, mIU/L, g/dL, etc.
+  measuredAt  DateTime
+  source      String   @default("manual") // manual, document_parse
+  createdAt   DateTime @default(now())
+
+  patient     Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@index([patientId, marker])
+  @@map("patient_biomarkers")
+}
+
+model PatientDietChart {
+  id               String    @id @default(uuid())
+  patientId        String
+  doctorId         String?
+  dietTemplateId   String?
+  // Generator audit
+  inputs           Json?     // full patient profile snapshot used for generation
+  snapshot         Json?     // 7-day grid {mon:{early_morning:[...], breakfast:[...], ...}, ...}
+  groceryList      Json?     // aisle-grouped grocery list
+  patientOverrides Json?     // doctor edits post-generation
+  // Denormalised aggregates
+  avgDailyKcal     Float?
+  avgDailyGi       Float?
+  violations       Json?     // [{rule, action, original, replacement}]
+  // Delivery
+  notes            String?   @db.Text
+  pdfUrl           String?
+  whatsappSentAt   DateTime?
+  version          Int       @default(1)
+  isActive         Boolean   @default(true)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  patient          Patient      @relation(fields: [patientId], references: [id])
+  dietTemplate     DietTemplate? @relation(fields: [dietTemplateId], references: [id])
+
+  @@index([patientId])
+  @@map("patient_diet_charts")
 }
