@@ -148,7 +148,7 @@ Files:
 - [x] `frontend/src/components/services/IntakeFormRenderer.tsx`
 - [x] Commit: `Phase 4 — Service catalog client lib + intake renderer`
 
-### Phase 5 — Frontend: patient catalog (browse, landing, intake)  `[x]`
+### Phase 5 — Frontend: patient catalog (browse, landing, intake)  `[x]` (commit `28894be`)
 - [x] `frontend/src/app/patient/services/page.tsx` — grid
 - [x] `frontend/src/app/patient/services/[slug]/page.tsx` — landing
 - [x] `frontend/src/app/patient/services/[slug]/intake/page.tsx` — config-driven form

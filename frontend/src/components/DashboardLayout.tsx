@@ -32,6 +32,7 @@ const doctorNav: NavItem[] = [
 
 const adminNav: NavItem[] = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/admin/services', label: 'Services', icon: Sparkles },
   { href: '/admin/doctors', label: 'Doctors', icon: Stethoscope },
   { href: '/admin/patients', label: 'Patients', icon: Users },
   { href: '/admin/cases', label: 'Cases', icon: FileText },
