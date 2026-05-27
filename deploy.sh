@@ -116,6 +116,7 @@ log "3/4  Install deps & build"
   npm ci
   npx prisma generate
   npx prisma db push            # create/update MySQL tables (no migrations folder)
+  npm run db:seed-diet          # upsert foods / recipes / templates (safe to re-run)
   npm run build )               # -> backend/dist/main.js
 
 ( cd frontend
