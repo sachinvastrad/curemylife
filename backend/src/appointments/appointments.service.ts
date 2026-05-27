@@ -1,12 +1,17 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { ServiceRequestsService } from '../service-requests/service-requests.service';
 
 @Injectable()
 export class AppointmentsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private serviceRequests: ServiceRequestsService,
+  ) {}
 
   async create(data: {
-    caseId: string;
+    caseId?: string;
+    serviceRequestId?: string;
     patientId: string;
     doctorId: string;
     appointmentType: string;
@@ -14,9 +19,32 @@ export class AppointmentsService {
     scheduledStart: string;
     isFollowup?: boolean;
   }) {
-    const caseData = await this.prisma.case.findUnique({ where: { id: data.caseId } });
-    if (!caseData) throw new NotFoundException('Case not found');
-    if (caseData.patientId !== data.patientId) throw new BadRequestException('Access denied');
+    // Exactly one of caseId / serviceRequestId must be set.
+    if (!!data.caseId === !!data.serviceRequestId) {
+      throw new BadRequestException(
+        'Provide exactly one of caseId or serviceRequestId',
+      );
+    }
+
+    if (data.caseId) {
+      const caseData = await this.prisma.case.findUnique({ where: { id: data.caseId } });
+      if (!caseData) throw new NotFoundException('Case not found');
+      if (caseData.patientId !== data.patientId) throw new BadRequestException('Access denied');
+    } else if (data.serviceRequestId) {
+      // Verifies ownership + status, returns routing specialities for doctor-fit check
+      const { specialityIds } = await this.serviceRequests.claimForBooking(
+        data.serviceRequestId,
+        data.patientId,
+      );
+      const fits = await this.prisma.doctorSpeciality.count({
+        where: { doctorId: data.doctorId, specialityId: { in: specialityIds } },
+      });
+      if (fits === 0) {
+        throw new BadRequestException(
+          'Selected doctor does not carry the required speciality for this service',
+        );
+      }
+    }
 
     // Calculate end time based on doctor's slot duration
     const avail = await this.prisma.doctorAvailability.findFirst({
@@ -41,6 +69,7 @@ export class AppointmentsService {
     const appointment = await this.prisma.appointment.create({
       data: {
         caseId: data.caseId,
+        serviceRequestId: data.serviceRequestId,
         patientId: data.patientId,
         doctorId: data.doctorId,
         appointmentType: data.appointmentType,
@@ -54,14 +83,22 @@ export class AppointmentsService {
       include: {
         doctor: { select: { id: true, name: true, initialFee: true, followupFee: true } },
         case_: { select: { caseNumber: true } },
+        serviceRequest: {
+          select: {
+            id: true,
+            service: { select: { id: true, slug: true, name: true } },
+          },
+        },
       },
     });
 
-    // Update case status
-    await this.prisma.case.update({
-      where: { id: data.caseId },
-      data: { status: 'consultation_booked' },
-    });
+    // Update source-container status (only one applies)
+    if (data.caseId) {
+      await this.prisma.case.update({
+        where: { id: data.caseId },
+        data: { status: 'consultation_booked' },
+      });
+    }
 
     return appointment;
   }
@@ -72,6 +109,12 @@ export class AppointmentsService {
       include: {
         doctor: { select: { id: true, name: true, photoUrl: true, qualifications: true } },
         case_: { select: { caseNumber: true, chiefComplaint: true } },
+        serviceRequest: {
+          select: {
+            id: true,
+            service: { select: { id: true, slug: true, name: true, iconName: true } },
+          },
+        },
         payment: true,
       },
       orderBy: { scheduledDate: 'desc' },
@@ -90,6 +133,19 @@ export class AppointmentsService {
       include: {
         patient: { select: { id: true, name: true, age: true, gender: true } },
         case_: { select: { caseNumber: true, chiefComplaint: true } },
+        serviceRequest: {
+          select: {
+            id: true,
+            intakePayload: true,
+            notes: true,
+            service: {
+              select: {
+                id: true, slug: true, name: true, iconName: true,
+                intakeFields: true,
+              },
+            },
+          },
+        },
       },
       orderBy: { scheduledDate: 'asc' },
     });

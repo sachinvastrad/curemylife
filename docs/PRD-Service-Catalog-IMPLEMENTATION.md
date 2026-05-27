@@ -123,7 +123,7 @@ Validation rules (server-side):
 - [x] `npx prisma generate` (verify schema compiles)
 - [x] Commit: `Phase 1 — Service Catalog schema`
 
-### Phase 2 — Backend: Services module (admin CRUD + public read)  `[x]`
+### Phase 2 — Backend: Services module (admin CRUD + public read)  `[x]` (commit `bc6d615`)
 Files:
 - [x] `backend/src/services/services.module.ts`
 - [x] `backend/src/services/services.controller.ts`
