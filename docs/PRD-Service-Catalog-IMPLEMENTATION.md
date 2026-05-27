@@ -116,7 +116,7 @@ Validation rules (server-side):
 
 ## 4. Phases & Checkpoints
 
-### Phase 1 — Schema + Prisma generate  `[x]`
+### Phase 1 — Schema + Prisma generate  `[x]` (commit `85a6e67`)
 - [x] Edit `backend/prisma/schema.prisma` with Service / ServiceSpeciality / ServiceRequest
 - [x] Make `Appointment.caseId` optional + add `serviceRequestId`
 - [x] Add back-relations on `Patient` and `Speciality`

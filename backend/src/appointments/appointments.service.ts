@@ -121,11 +121,13 @@ export class AppointmentsService {
       },
     });
 
-    // Update case status
-    await this.prisma.case.update({
-      where: { id: appt.caseId },
-      data: { status: 'consultation_done' },
-    });
+    // Update case status (skipped for service-originated appointments)
+    if (appt.caseId) {
+      await this.prisma.case.update({
+        where: { id: appt.caseId },
+        data: { status: 'consultation_done' },
+      });
+    }
 
     // Mark payment as captured
     await this.prisma.payment.updateMany({
