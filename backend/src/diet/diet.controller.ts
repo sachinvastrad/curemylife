@@ -4,6 +4,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { DietService } from './diet.service';
+import { GeneratorResult } from './diet-generator.service';
 import { JwtAuthGuard, RolesGuard, Roles } from '../auth/guards/auth.guard';
 import {
   GenerateDietDto,
@@ -90,7 +91,7 @@ export class DietController {
   @Post('generate')
   @UseGuards(RolesGuard)
   @Roles('doctor', 'admin')
-  async generate(@Body() dto: GenerateDietDto, @Req() req: any) {
+  async generate(@Body() dto: GenerateDietDto, @Req() req: any): Promise<GeneratorResult & { chartId?: string }> {
     if (!dto.patientId) throw new BadRequestException('patientId is required');
     return this.dietService.generate(dto);
   }

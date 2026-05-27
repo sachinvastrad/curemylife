@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { DietGeneratorService } from './diet-generator.service';
+import { DietGeneratorService, GeneratorResult } from './diet-generator.service';
 import { GenerateDietDto, SaveDietChartDto, CreateBiomarkerDto, SwapFoodDto } from './dto/diet.dto';
 
 @Injectable()
@@ -11,7 +11,7 @@ export class DietService {
   ) {}
 
   // ===================== GENERATE =====================
-  async generate(dto: GenerateDietDto) {
+  async generate(dto: GenerateDietDto): Promise<GeneratorResult & { chartId?: string }> {
     const result = await this.generator.generate(dto);
 
     if (dto.persist) {

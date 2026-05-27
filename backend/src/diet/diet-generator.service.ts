@@ -65,11 +65,11 @@ interface DayPlan {
   [slot: string]: SlotItem[];
 }
 
-interface WeekPlan {
+export interface WeekPlan {
   [day: string]: DayPlan;
 }
 
-interface GeneratorResult {
+export interface GeneratorResult {
   success: boolean;
   inputs: GenerateDietDto & { derivedDiseaseTags: string[]; targetKcal: number; macroTargets: any };
   snapshot: {
@@ -466,9 +466,9 @@ export class DietGeneratorService {
 
       // Budget check
       if (dto.budgetTier) {
-        const budgetRank = { bare_minimum: 0, economy: 1, standard: 2, premium: 3, no_constraint: 4 };
-        const foodRank = { economy: 1, standard: 2, premium: 3 };
-        if ((foodRank[f.costTier as string] || 2) > (budgetRank[dto.budgetTier] || 4)) return false;
+        const budgetRank: Record<string, number> = { bare_minimum: 0, economy: 1, standard: 2, premium: 3, no_constraint: 4 };
+        const foodRank: Record<string, number> = { economy: 1, standard: 2, premium: 3 };
+        if ((foodRank[f.costTier] ?? 2) > (budgetRank[dto.budgetTier] ?? 4)) return false;
       }
 
       // Cooking time check
