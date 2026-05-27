@@ -25,12 +25,13 @@ model Patient {
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
-  cases          Case[]
-  appointments   Appointment[]
-  prescriptions  Prescription[]
-  payments       Payment[]
-  reviews        DoctorReview[]
-  notifications  Notification[]
+  cases           Case[]
+  appointments    Appointment[]
+  prescriptions   Prescription[]
+  payments        Payment[]
+  reviews         DoctorReview[]
+  notifications   Notification[]
+  serviceRequests ServiceRequest[]
 
   @@map("patients")
 }
@@ -100,6 +101,7 @@ model Speciality {
 
   doctors       DoctorSpeciality[]
   cases         CaseSpeciality[]
+  services      ServiceSpeciality[]
 
   @@map("specialities")
 }
@@ -305,7 +307,8 @@ model DoctorAvailability {
 
 model Appointment {
   id                 String    @id @default(uuid())
-  caseId             String
+  caseId             String?   // nullable since v1.1 (Service Catalog) — see serviceRequestId
+  serviceRequestId   String?   // either caseId or serviceRequestId is set, never both
   patientId          String
   doctorId           String
   appointmentType    String    // video, audio, in_clinic
@@ -322,13 +325,15 @@ model Appointment {
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
 
-  case_              Case     @relation(fields: [caseId], references: [id])
+  case_              Case?            @relation(fields: [caseId], references: [id])
+  serviceRequest     ServiceRequest?  @relation(fields: [serviceRequestId], references: [id])
   patient            Patient  @relation(fields: [patientId], references: [id])
   doctor             Doctor   @relation(fields: [doctorId], references: [id])
   payment            Payment?
   prescriptions      Prescription[]
   review             DoctorReview?
 
+  @@index([serviceRequestId])
   @@map("appointments")
 }
 
@@ -468,4 +473,62 @@ model DoctorReview {
   appointment     Appointment @relation(fields: [appointmentId], references: [id])
 
   @@map("doctor_reviews")
+}
+
+// ==================== SERVICE CATALOG ====================
+
+model Service {
+  id            String    @id @default(uuid())
+  slug          String    @unique
+  name          String
+  tagline       String?   @db.Text
+  description   String?   @db.Text       // landing-page body
+  howItWorks    Json?                    // [{step, title, body}]
+  inclusions    Json?                    // string[]
+  iconName      String?                  // lucide-react icon name
+  cardImageUrl  String?
+  intakeFields  Json                     // FieldDef[] — see PRD-Service-Catalog-IMPLEMENTATION.md §3
+  price         Decimal?  @db.Decimal(10, 2)   // reserved for paid services (hidden in v1)
+  displayOrder  Int       @default(0)
+  isEnabled     Boolean   @default(false)
+  deletedAt     DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  specialities  ServiceSpeciality[]
+  requests      ServiceRequest[]
+
+  @@index([isEnabled, displayOrder])
+  @@map("services")
+}
+
+model ServiceSpeciality {
+  serviceId    String
+  specialityId Int
+
+  service      Service    @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  speciality   Speciality @relation(fields: [specialityId], references: [id])
+
+  @@id([serviceId, specialityId])
+  @@map("service_specialities")
+}
+
+model ServiceRequest {
+  id            String    @id @default(uuid())
+  serviceId     String
+  patientId     String
+  status        String    @default("draft") // draft, submitted, booked, completed, cancelled
+  intakePayload Json                          // matches Service.intakeFields shape
+  notes         String?   @db.Text
+  submittedAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  service       Service       @relation(fields: [serviceId], references: [id])
+  patient       Patient       @relation(fields: [patientId], references: [id])
+  appointments  Appointment[]
+
+  @@index([patientId])
+  @@index([serviceId])
+  @@map("service_requests")
 }
