@@ -33,6 +33,22 @@ export class DietService {
     return result;
   }
 
+  // ===================== PATIENT SEARCH =====================
+  async searchPatients(q: string) {
+    return this.prisma.patient.findMany({
+      where: {
+        isActive: true,
+        OR: [
+          { name: { contains: q } },
+          { phone: { contains: q } },
+          { email: { contains: q } },
+        ],
+      },
+      select: { id: true, name: true, phone: true, email: true, age: true, gender: true },
+      take: 20,
+    });
+  }
+
   // ===================== FOODS =====================
   async searchFoods(q?: string, category?: string, vegType?: string) {
     return (this.prisma as any).food.findMany({

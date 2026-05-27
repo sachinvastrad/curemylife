@@ -18,6 +18,15 @@ import {
 export class DietController {
   constructor(private dietService: DietService) {}
 
+  // ===================== PATIENT SEARCH =====================
+
+  @Get('patients/search')
+  @UseGuards(RolesGuard)
+  @Roles('doctor', 'admin')
+  async searchPatients(@Query('q') q = '') {
+    return this.dietService.searchPatients(q);
+  }
+
   // ===================== FOODS =====================
 
   @Get('foods')

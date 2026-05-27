@@ -143,7 +143,7 @@ const DEFAULT_FORM: FormState = {
   sleepHoursAvg: 7,
   stressLevel: 'moderate',
   waterIntakeL: 2,
-  persist: true,
+  persist: false,
 };
 
 // ===================== COLLAPSIBLE SECTION =====================
@@ -200,10 +200,26 @@ function DietGenerateInner() {
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState('');
   const [step, setStep] = useState(1); // 1=identity, 2=goal, 3=personalisation, 4=review
+  const [patientQuery, setPatientQuery] = useState('');
+  const [patientResults, setPatientResults] = useState<any[]>([]);
+  const [patientSearching, setPatientSearching] = useState(false);
 
   useEffect(() => {
     if (!authLoading && (!user || user.role !== 'doctor')) router.push('/login');
   }, [authLoading, user]);
+
+  useEffect(() => {
+    if (!patientQuery || patientQuery.length < 2) { setPatientResults([]); return; }
+    const timer = setTimeout(async () => {
+      setPatientSearching(true);
+      try {
+        const { data } = await dietApi.searchPatients(patientQuery);
+        setPatientResults(data);
+      } catch { setPatientResults([]); }
+      finally { setPatientSearching(false); }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [patientQuery]);
 
   const set = (key: keyof FormState, value: any) => setForm(f => ({ ...f, [key]: value }));
 
@@ -284,9 +300,46 @@ function DietGenerateInner() {
         {/* Step 1 — Identity & Biometrics */}
         <Section title="Patient & Biometrics" icon={User} defaultOpen={true}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="label">Patient ID *</label>
-              <input className="input" value={form.patientId} onChange={e => set('patientId', e.target.value)} placeholder="Patient UUID" />
+            <div className="md:col-span-2">
+              <label className="label">Search Patient *</label>
+              {form.patientId ? (
+                <div className="input flex items-center justify-between">
+                  <span className="text-sm">{form.patientName} <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>({form.patientId.slice(0, 8)}…)</span></span>
+                  <button className="text-xs" style={{ color: 'var(--error)' }} onClick={() => { set('patientId', ''); set('patientName', ''); setPatientQuery(''); }}>✕ Clear</button>
+                </div>
+              ) : (
+                <div style={{ position: 'relative' }}>
+                  <input
+                    className="input"
+                    value={patientQuery}
+                    onChange={e => setPatientQuery(e.target.value)}
+                    placeholder="Type patient name or phone…"
+                  />
+                  {patientSearching && <div className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>Searching…</div>}
+                  {patientResults.length > 0 && (
+                    <div style={{
+                      position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50,
+                      background: 'var(--bg-card)', border: '1px solid var(--border)',
+                      borderRadius: 8, boxShadow: '0 8px 24px rgba(0,0,0,0.3)', maxHeight: 240, overflowY: 'auto',
+                    }}>
+                      {patientResults.map((p: any) => (
+                        <button key={p.id} className="w-full text-left px-4 py-2 text-sm hover:bg-white/5"
+                          onClick={() => {
+                            set('patientId', p.id);
+                            set('patientName', p.name);
+                            if (p.age) set('age', p.age);
+                            if (p.gender) set('gender', p.gender);
+                            setPatientResults([]);
+                            setPatientQuery('');
+                          }}>
+                          <span className="font-medium">{p.name}</span>
+                          <span className="ml-2 text-xs" style={{ color: 'var(--text-muted)' }}>{p.phone || p.email}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
             <div>
               <label className="label">Patient Name</label>

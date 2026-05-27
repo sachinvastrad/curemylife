@@ -171,6 +171,10 @@ export const adminApi = {
 
 // ==================== MAGIC DIET ====================
 export const dietApi = {
+  // Patients
+  searchPatients: (q: string) =>
+    api.get('/api/diet/patients/search', { params: { q } }),
+
   // Foods
   searchFoods: (q?: string, category?: string, veg?: string) =>
     api.get('/api/diet/foods', { params: { q, category, veg } }),
