@@ -141,6 +141,11 @@ export default function PatientAppointmentsPage() {
                         <Video className="w-4 h-4" /> {a.appointmentType} Consultation
                       </p>
                     </div>
+                    {a.serviceRequest?.service && (
+                      <p className="text-xs mt-2 inline-flex items-center gap-1.5" style={{ color: 'var(--primary-light)' }}>
+                        <span className="badge badge-primary">Service</span> {a.serviceRequest.service.name}
+                      </p>
+                    )}
                   </div>
 
                   <div className="flex flex-col gap-2 min-w-[150px]">

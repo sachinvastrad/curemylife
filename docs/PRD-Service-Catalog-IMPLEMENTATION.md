@@ -156,7 +156,7 @@ Files:
 - [x] Update `DashboardLayout` sidebar — add `Services` for patient
 - [x] Commit: `Phase 5 — Patient catalog UI`
 
-### Phase 6 — Frontend: admin catalog management  `[x]`
+### Phase 6 — Frontend: admin catalog management  `[x]` (commit `737ca3f`)
 - [x] `frontend/src/app/admin/services/page.tsx` — table (enable/disable/delete)
 - [x] `frontend/src/app/admin/services/new/page.tsx`
 - [x] `frontend/src/app/admin/services/[id]/edit/page.tsx`
