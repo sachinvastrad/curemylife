@@ -4,8 +4,6 @@
  * Stub seed: ~30 foods, ~10 recipes, ~5 templates, ~40 substitutions
  * Run: npx ts-node prisma/seed-diet.ts
  */
-import * as dotenv from 'dotenv';
-dotenv.config();
 import { PrismaClient } from '@prisma/client';
 import { PrismaMariaDb } from '@prisma/adapter-mariadb';
 
