@@ -142,7 +142,7 @@ Files:
 - [x] Register module in `app.module.ts`
 - [x] Commit: `Phase 3 — ServiceRequests + Appointment hook`
 
-### Phase 4 — Frontend: shared lib + intake renderer  `[x]`
+### Phase 4 — Frontend: shared lib + intake renderer  `[x]` (commit `0b079ba`)
 - [x] `frontend/src/lib/api.ts` — add `servicesApi`, `serviceRequestsApi`
 - [x] `frontend/src/lib/services-types.ts` — FieldDef and Service types
 - [x] `frontend/src/components/services/IntakeFormRenderer.tsx`

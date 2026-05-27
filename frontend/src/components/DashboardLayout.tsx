@@ -6,13 +6,14 @@ import { useAuth } from '@/lib/auth-context';
 import {
   LayoutDashboard, FileText, Calendar, CreditCard, User, LogOut,
   Stethoscope, Users, BarChart3, ClipboardList, PlusCircle, Pill,
-  Menu, X,
+  Menu, X, Sparkles,
 } from 'lucide-react';
 
 interface NavItem { href: string; label: string; icon: any; }
 
 const patientNav: NavItem[] = [
   { href: '/patient/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/patient/services', label: 'Services', icon: Sparkles },
   { href: '/patient/new-case', label: 'New Case', icon: PlusCircle },
   { href: '/patient/cases', label: 'My Cases', icon: FileText },
   { href: '/patient/appointments', label: 'Appointments', icon: Calendar },
