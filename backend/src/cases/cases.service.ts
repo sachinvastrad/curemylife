@@ -67,7 +67,6 @@ export class CasesService {
         doctorReports: { include: { doctor: { select: { id: true, name: true, qualifications: true } } } },
         assignedDoctor: { select: { id: true, name: true, photoUrl: true, qualifications: true } },
         appointments: { orderBy: { scheduledDate: 'desc' } },
-        prescriptions: { orderBy: { createdAt: 'desc' } },
       },
     });
 

@@ -3,27 +3,19 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import DashboardLayout from '@/components/DashboardLayout';
-import { appointmentsApi, prescriptionsApi } from '@/lib/api';
-import { Calendar, Video, Clock, Loader2, Pill, Sparkles, CheckCircle2 } from 'lucide-react';
-import Link from 'next/link';
+import { appointmentsApi } from '@/lib/api';
+import { Calendar, Video, Clock, Sparkles, CheckCircle2 } from 'lucide-react';
 
 export default function DoctorAppointmentsPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [appointments, setAppointments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  
-  // Prescription Form State
-  const [activeAppointment, setActiveAppointment] = useState<any>(null);
-  const [prescriptionForm, setPrescriptionForm] = useState({
-    remedyName: '', potency: '', dosage: '', frequency: '', duration: '',
-    dietaryRestrictions: '', followupTimeline: '',
-  });
-  const [submittingPrescription, setSubmittingPrescription] = useState(false);
+  const [completingId, setCompletingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && (!user || user.role !== 'doctor')) router.push('/login');
-  }, [authLoading, user]);
+  }, [authLoading, user, router]);
 
   useEffect(() => {
     if (user?.role === 'doctor') loadAppointments();
@@ -47,41 +39,34 @@ export default function DoctorAppointmentsPage() {
     } catch (e) { console.error(e); }
   };
 
-  const handleIssuePrescription = async () => {
-    if (!activeAppointment) return;
-    setSubmittingPrescription(true);
+  const handleComplete = async (id: string) => {
+    setCompletingId(id);
     try {
-      await prescriptionsApi.create({
-        caseId: activeAppointment.caseId,
-        appointmentId: activeAppointment.id,
-        patientId: activeAppointment.patientId,
-        ...prescriptionForm
-      });
-      await appointmentsApi.complete(activeAppointment.id, 'Prescription issued');
-      setActiveAppointment(null);
-      setPrescriptionForm({ remedyName: '', potency: '', dosage: '', frequency: '', duration: '', dietaryRestrictions: '', followupTimeline: '' });
-      loadAppointments();
+      await appointmentsApi.complete(id, 'Consultation completed');
+      await loadAppointments();
     } catch (e) {
       console.error(e);
     } finally {
-      setSubmittingPrescription(false);
+      setCompletingId(null);
     }
   };
 
-  if (authLoading || loading) return <DashboardLayout><div className="flex justify-center py-20"><div className="spinner" /></div></DashboardLayout>;
+  if (authLoading || loading) {
+    return <DashboardLayout><div className="flex justify-center py-20"><div className="spinner" /></div></DashboardLayout>;
+  }
 
   return (
     <DashboardLayout>
       <div className="animate-in max-w-5xl">
         <h1 className="text-2xl font-bold mb-2">Appointments</h1>
-        <p className="text-sm mb-8" style={{ color: 'var(--text-muted)' }}>Manage your consultation schedule and issue prescriptions</p>
-        
+        <p className="text-sm mb-8" style={{ color: 'var(--text-muted)' }}>Manage your consultation schedule</p>
+
         {appointments.length === 0 ? (
           <div className="card text-center py-16">
             <Calendar className="w-16 h-16 mx-auto mb-4" style={{ color: 'var(--text-muted)' }} />
             <p className="text-lg font-medium mb-2">No appointments scheduled</p>
             <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-              When patients book a consultation after receiving your report, they will appear here.
+              When patients book a consultation, they will appear here.
             </p>
           </div>
         ) : (
@@ -122,19 +107,14 @@ export default function DoctorAppointmentsPage() {
                         <a href={a.meetingLink || '#'} target="_blank" rel="noreferrer" className="btn btn-secondary w-full text-center">
                           Join Video Call
                         </a>
-                        {a.case_ ? (
-                          <button className="btn btn-success w-full" onClick={() => setActiveAppointment(a)}>
-                            <Pill className="w-4 h-4" /> Issue Prescription
-                          </button>
-                        ) : (
-                          <button
-                            className="btn btn-success w-full"
-                            onClick={() => appointmentsApi.complete(a.id, 'Service consultation completed').then(loadAppointments)}
-                            title="Service consultations don't require a prescription in v1"
-                          >
-                            <CheckCircle2 className="w-4 h-4" /> Mark Completed
-                          </button>
-                        )}
+                        <button
+                          className="btn btn-success w-full"
+                          onClick={() => handleComplete(a.id)}
+                          disabled={completingId === a.id}
+                        >
+                          <CheckCircle2 className="w-4 h-4" />
+                          {completingId === a.id ? 'Completing…' : 'Mark Completed'}
+                        </button>
                       </>
                     )}
                     {a.status === 'completed' && (
@@ -144,80 +124,6 @@ export default function DoctorAppointmentsPage() {
                 </div>
               </div>
             ))}
-          </div>
-        )}
-
-        {/* Prescription Modal */}
-        {activeAppointment && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-            <div className="card w-full max-w-2xl max-h-[90vh] overflow-y-auto" style={{ background: 'var(--bg-dark)' }}>
-              <h2 className="text-xl font-bold mb-4">Issue Prescription for {activeAppointment.patient?.name}</h2>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                <div>
-                  <label className="label">Remedy Name *</label>
-                  <input className="input" placeholder="e.g. Nux Vomica" value={prescriptionForm.remedyName} 
-                    onChange={e => setPrescriptionForm({...prescriptionForm, remedyName: e.target.value})} />
-                </div>
-                <div>
-                  <label className="label">Potency *</label>
-                  <input className="input" placeholder="e.g. 200C" value={prescriptionForm.potency} 
-                    onChange={e => setPrescriptionForm({...prescriptionForm, potency: e.target.value})} />
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-                <div>
-                  <label className="label">Dosage *</label>
-                  <input className="input" placeholder="e.g. 4 pills" value={prescriptionForm.dosage} 
-                    onChange={e => setPrescriptionForm({...prescriptionForm, dosage: e.target.value})} />
-                </div>
-                <div>
-                  <label className="label">Frequency *</label>
-                  <input className="input" placeholder="e.g. TDS" value={prescriptionForm.frequency} 
-                    onChange={e => setPrescriptionForm({...prescriptionForm, frequency: e.target.value})} />
-                </div>
-                <div>
-                  <label className="label">Duration *</label>
-                  <input className="input" placeholder="e.g. 1 week" value={prescriptionForm.duration} 
-                    onChange={e => setPrescriptionForm({...prescriptionForm, duration: e.target.value})} />
-                </div>
-              </div>
-
-              <div className="mb-4">
-                <label className="label">Dietary Restrictions</label>
-                <textarea className="input" rows={2} placeholder="e.g. Avoid coffee and camphor" value={prescriptionForm.dietaryRestrictions} 
-                  onChange={e => setPrescriptionForm({...prescriptionForm, dietaryRestrictions: e.target.value})} />
-              </div>
-
-              <div className="mb-6">
-                <label className="label">Follow-up Timeline</label>
-                <input className="input" placeholder="e.g. After 15 days" value={prescriptionForm.followupTimeline} 
-                  onChange={e => setPrescriptionForm({...prescriptionForm, followupTimeline: e.target.value})} />
-              </div>
-
-              {(() => {
-                const missing = [
-                  !prescriptionForm.remedyName && 'Remedy Name',
-                  !prescriptionForm.potency && 'Potency',
-                  !prescriptionForm.dosage && 'Dosage',
-                  !prescriptionForm.frequency && 'Frequency',
-                  !prescriptionForm.duration && 'Duration',
-                ].filter(Boolean) as string[];
-                return missing.length > 0 ? (
-                  <div className="mb-3 p-3 rounded-lg text-xs" style={{ background: 'rgba(234,179,8,0.1)', color: 'var(--warning, #d97706)' }}>
-                    Please fill the required field{missing.length > 1 ? 's' : ''}: {missing.join(', ')}.
-                  </div>
-                ) : null;
-              })()}
-              <div className="flex justify-end gap-3">
-                <button className="btn btn-ghost" onClick={() => setActiveAppointment(null)}>Cancel</button>
-                <button className="btn btn-primary" disabled={submittingPrescription || !prescriptionForm.remedyName || !prescriptionForm.potency || !prescriptionForm.dosage || !prescriptionForm.frequency || !prescriptionForm.duration} onClick={handleIssuePrescription}>
-                  {submittingPrescription ? <Loader2 className="w-4 h-4 animate-spin" /> : <Pill className="w-4 h-4" />}
-                  Complete & Send
-                </button>
-              </div>
-            </div>
           </div>
         )}
       </div>

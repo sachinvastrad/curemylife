@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import {
   LayoutDashboard, FileText, Calendar, CreditCard, User, LogOut,
-  Stethoscope, Users, BarChart3, ClipboardList, PlusCircle, Pill,
+  Stethoscope, Users, BarChart3, ClipboardList, PlusCircle,
   Menu, X, Zap, Sparkles,
 } from 'lucide-react';
 
@@ -17,7 +17,6 @@ const patientNav: NavItem[] = [
   { href: '/patient/new-case', label: 'New Case', icon: PlusCircle },
   { href: '/patient/cases', label: 'My Cases', icon: FileText },
   { href: '/patient/appointments', label: 'Appointments', icon: Calendar },
-  { href: '/patient/prescriptions', label: 'Prescriptions', icon: Pill },
   { href: '/patient/diet', label: 'Diet Plans', icon: Zap },
   { href: '/patient/profile', label: 'Profile', icon: User },
 ];

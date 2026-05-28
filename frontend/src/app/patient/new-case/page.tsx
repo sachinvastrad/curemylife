@@ -233,7 +233,7 @@ export default function NewCasePage() {
               <span className="badge badge-info text-xs">Optional — you can skip this</span>
             </div>
             <p className="text-sm mb-6" style={{ color: 'var(--text-muted)' }}>
-              Upload lab reports, imaging, previous prescriptions. PDF, JPEG, PNG — max 25 MB each.
+              Upload lab reports, imaging, previous medical records. PDF, JPEG, PNG — max 25 MB each.
               Documents improve the analysis but are not required to submit.
             </p>
 

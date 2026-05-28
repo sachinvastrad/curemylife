@@ -7,7 +7,6 @@ import { DoctorsModule } from './doctors/doctors.module';
 import { AiModule } from './ai/ai.module';
 import { AppointmentsModule } from './appointments/appointments.module';
 import { PaymentsModule } from './payments/payments.module';
-import { PrescriptionsModule } from './prescriptions/prescriptions.module';
 import { AdminModule } from './admin/admin.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { SpecialitiesModule } from './specialities/specialities.module';
@@ -25,7 +24,6 @@ import { ServiceRequestsModule } from './service-requests/service-requests.modul
     AiModule,
     AppointmentsModule,
     PaymentsModule,
-    PrescriptionsModule,
     AdminModule,
     ReviewsModule,
     SpecialitiesModule,

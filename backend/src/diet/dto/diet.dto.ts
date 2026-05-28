@@ -121,11 +121,6 @@ export class GenerateDietDto {
   @IsNumber()
   waterIntakeL?: number;
 
-  // Override — if doctor wants to force a specific template
-  @IsOptional()
-  @IsString()
-  templateId?: string;
-
   // Whether to persist the chart after generating
   @IsOptional()
   @IsBoolean()
@@ -137,10 +132,6 @@ export class GenerateDietDto {
 export class SaveDietChartDto {
   @IsString()
   patientId: string;
-
-  @IsOptional()
-  @IsString()
-  dietTemplateId?: string;
 
   @IsOptional()
   inputs?: any;

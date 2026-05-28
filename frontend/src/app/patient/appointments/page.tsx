@@ -155,20 +155,15 @@ export default function PatientAppointmentsPage() {
                       </a>
                     )}
                     {a.status === 'completed' && (
-                      <>
-                        <Link href="/patient/prescriptions" className="btn btn-secondary w-full text-center">
-                          View Prescription
-                        </Link>
-                        {reviewedIds.has(a.id) ? (
-                          <p className="text-xs text-center flex items-center justify-center gap-1" style={{ color: '#f59e0b' }}>
-                            <Star className="w-3 h-3 fill-current" /> Reviewed
-                          </p>
-                        ) : (
-                          <button className="btn btn-ghost w-full" onClick={() => openReview(a)}>
-                            <Star className="w-4 h-4" /> Leave Review
-                          </button>
-                        )}
-                      </>
+                      reviewedIds.has(a.id) ? (
+                        <p className="text-xs text-center flex items-center justify-center gap-1" style={{ color: '#f59e0b' }}>
+                          <Star className="w-3 h-3 fill-current" /> Reviewed
+                        </p>
+                      ) : (
+                        <button className="btn btn-ghost w-full" onClick={() => openReview(a)}>
+                          <Star className="w-4 h-4" /> Leave Review
+                        </button>
+                      )
                     )}
                   </div>
                 </div>

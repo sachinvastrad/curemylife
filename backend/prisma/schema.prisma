@@ -72,7 +72,6 @@ model Patient {
 
   cases           Case[]
   appointments    Appointment[]
-  prescriptions   Prescription[]
   payments        Payment[]
   reviews         DoctorReview[]
   notifications   Notification[]
@@ -115,7 +114,6 @@ model Doctor {
   doctorReports    DoctorReport[]
   availability     DoctorAvailability[]
   appointments     Appointment[]
-  prescriptions    Prescription[]
   paymentsReceived Payment[]
   payouts          DoctorPayout[]
   reviews          DoctorReview[]
@@ -219,7 +217,6 @@ model Case {
   aiReports      AiReport[]
   doctorReports  DoctorReport[]
   appointments   Appointment[]
-  prescriptions  Prescription[]
 
   @@map("cases")
 }
@@ -377,39 +374,10 @@ model Appointment {
   patient            Patient  @relation(fields: [patientId], references: [id])
   doctor             Doctor   @relation(fields: [doctorId], references: [id])
   payment            Payment?
-  prescriptions      Prescription[]
   review             DoctorReview?
 
   @@index([serviceRequestId])
   @@map("appointments")
-}
-
-// ==================== PRESCRIPTIONS ====================
-
-model Prescription {
-  id                   String   @id @default(uuid())
-  caseId               String
-  appointmentId        String?
-  doctorId             String
-  patientId            String
-  remedyName           String
-  potency              String
-  dosage               String
-  frequency            String
-  duration             String
-  dietaryRestrictions  String?  @db.Text
-  expectedAggravation  String?  @db.Text
-  followupTimeline     String?  @db.Text
-  digitalSignature     String?  @db.Text
-  pdfStorageKey        String?
-  createdAt            DateTime @default(now())
-
-  case_                Case        @relation(fields: [caseId], references: [id])
-  appointment          Appointment? @relation(fields: [appointmentId], references: [id])
-  doctor               Doctor      @relation(fields: [doctorId], references: [id])
-  patient              Patient     @relation(fields: [patientId], references: [id])
-
-  @@map("prescriptions")
 }
 
 // ==================== PAYMENTS ====================
@@ -639,48 +607,6 @@ model FoodSubstitution {
   @@map("food_substitutions")
 }
 
-model DietTemplate {
-  id                    String   @id @default(uuid())
-  clinicId              String?  // NULL = global NIN template
-  name                  String
-  description           String?  @db.Text
-  // Classification
-  dietType              String   // VEG, NON_VEG, EGGETARIAN, VEGAN, JAIN, SATVIK, ANY
-  ageGroup              String   // INFANT,TODDLER,CHILD,TEEN,ADULT,ELDERLY,PREGNANT,LACTATING,ANY
-  goal                  String   // weight_loss, weight_gain, diabetes_management, heart_health, pcos, ckd, etc.
-  conditionTags         Json?    // string[] disease tags
-  cuisineRegions        Json?    // string[]
-  // Calorie & macro targets
-  targetKcal            Int?
-  macroSplit            Json?    // {carbs_pct, protein_pct, fat_pct}
-  proteinPerKg          Float?
-  giCap                 Int?     // max GI per item
-  saltCapG              Float?
-  addedSugarCapG        Float?
-  oilCapMl              Float?
-  potassiumCapMg        Float?
-  waterTargetL          Float?
-  // Slot distribution
-  slotDistribution      Json?    // {early_morning:3, breakfast:22, ...} in %
-  // Allowed / avoid foods
-  allowedFoods          Json?    // string[] food IDs or names
-  avoidFoods            Json?    // string[] food IDs or names
-  lifestyleNotes        String?  @db.Text
-  supplementHints       String?  @db.Text
-  requiresDietitianReview Boolean @default(false)
-  source                String   @default("NIN-2024")
-  isActive              Boolean  @default(true)
-  createdBy             String?
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
-
-  dietCharts            PatientDietChart[]
-
-  @@index([goal])
-  @@index([dietType])
-  @@map("diet_templates")
-}
-
 model PatientBiomarker {
   id          String   @id @default(uuid())
   patientId   String
@@ -702,7 +628,6 @@ model PatientDietChart {
   id               String    @id @default(uuid())
   patientId        String
   doctorId         String?
-  dietTemplateId   String?
   // Generator audit
   inputs           Json?     // full patient profile snapshot used for generation
   snapshot         Json?     // 7-day grid {mon:{early_morning:[...], breakfast:[...], ...}, ...}
@@ -721,8 +646,7 @@ model PatientDietChart {
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
-  patient          Patient      @relation(fields: [patientId], references: [id])
-  dietTemplate     DietTemplate? @relation(fields: [dietTemplateId], references: [id])
+  patient          Patient   @relation(fields: [patientId], references: [id])
 
   @@index([patientId])
   @@map("patient_diet_charts")

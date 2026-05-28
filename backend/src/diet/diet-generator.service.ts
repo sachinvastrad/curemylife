@@ -79,7 +79,6 @@ export interface GeneratorResult {
   };
   groceryList: { [aisle: string]: { name: string; qty: string; costTier: string }[] };
   violations: { rule: string; action: string; original: string; replacement: string }[];
-  templateUsed: string | null;
 }
 
 const DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
@@ -140,16 +139,12 @@ export class DietGeneratorService {
     // 2. Compute TDEE & targets
     const { targetKcal, macroTargets } = this.computeTargets({ ...dto, diseaseTags: allDiseaseTags });
 
-    // 3. Select best template
-    const template = await this.selectTemplate({ ...dto, diseaseTags: allDiseaseTags });
-
-    // 4. Build active slot list (respecting fasting window)
+    // 3. Build active slot list (respecting fasting window)
     const activeSlots = this.getActiveSlots(dto.fastingWindow || 'none');
 
-    // 5. Compute slot kcal distribution
-    const slotDist = template?.slotDistribution
-      ? (template.slotDistribution as { [k: string]: number })
-      : DEFAULT_SLOT_DIST;
+    // 4. Compute slot kcal distribution (constant; template-driven dist removed
+    //    when the user-facing DietTemplate feature was retired)
+    const slotDist = DEFAULT_SLOT_DIST;
     const slotKcal: { [k: string]: number } = {};
     const activeSlotsSet = new Set(activeSlots);
     let totalPct = 0;
@@ -160,8 +155,8 @@ export class DietGeneratorService {
       slotKcal[s] = Math.round((targetKcal * (slotDist[s] || 0)) / (totalPct || 100));
     }
 
-    // 6. Load all eligible foods
-    const allFoods = await this.loadEligibleFoods({ ...dto, diseaseTags: allDiseaseTags }, template);
+    // 5. Load all eligible foods
+    const allFoods = await this.loadEligibleFoods({ ...dto, diseaseTags: allDiseaseTags });
 
     // 7. Generate 7-day plan
     const week: WeekPlan = {};
@@ -215,13 +210,13 @@ export class DietGeneratorService {
       week[day] = dayPlan;
     }
 
-    // 8. Hard-cap validation
-    this.runRuleEngine(week, dayTotals, allDiseaseTags, macroTargets, template, violations);
+    // 6. Hard-cap validation
+    this.runRuleEngine(week, dayTotals, allDiseaseTags, macroTargets, violations);
 
-    // 9. Weekly rollup
+    // 7. Weekly rollup
     const weeklyRollup = this.computeWeeklyRollup(dayTotals, targetKcal, macroTargets);
 
-    // 10. Grocery list
+    // 8. Grocery list
     const groceryList = this.buildGroceryList(week, allFoods);
 
     return {
@@ -230,7 +225,6 @@ export class DietGeneratorService {
       snapshot: { week, dayTotals, weeklyRollup },
       groceryList,
       violations,
-      templateUsed: template?.id || null,
     };
   }
 
@@ -381,48 +375,6 @@ export class DietGeneratorService {
   }
 
   // ====================================================
-  // PRIVATE: TEMPLATE SELECTION
-  // ====================================================
-  private async selectTemplate(dto: GenerateDietDto & { diseaseTags?: string[] }) {
-    const templates = await (this.prisma as any).dietTemplate.findMany({
-      where: { isActive: true },
-    });
-
-    if (!templates.length) return null;
-
-    // Score each template
-    const scored = templates.map((t: any) => {
-      let score = 0;
-
-      // Diet type match (high weight)
-      if (!dto.dietType || t.dietType === 'ANY' || t.dietType === dto.dietType) score += 3;
-      else score -= 2; // penalise mismatch
-
-      // Goal / disease overlap
-      const tmplTags: string[] = Array.isArray(t.conditionTags) ? t.conditionTags : (t.conditionTags ? JSON.parse(t.conditionTags) : []);
-      const overlap = (dto.diseaseTags || []).filter(d => tmplTags.includes(d)).length;
-      score += overlap * 2;
-
-      // Cuisine match
-      const tmplCuisines: string[] = Array.isArray(t.cuisineRegions) ? t.cuisineRegions : (t.cuisineRegions ? JSON.parse(t.cuisineRegions) : []);
-      if (dto.cuisineRegion && tmplCuisines.includes(dto.cuisineRegion)) score += 1;
-
-      // Age group — simplified
-      if (t.ageGroup === 'ADULT' || t.ageGroup === 'ANY') score += 1;
-
-      // Pregnancy match
-      if (dto.pregnancyStatus && dto.pregnancyStatus !== 'none') {
-        if (t.ageGroup === 'PREGNANT') score += 3;
-      }
-
-      return { template: t, score };
-    });
-
-    scored.sort((a: any, b: any) => b.score - a.score);
-    return scored[0]?.template || null;
-  }
-
-  // ====================================================
   // PRIVATE: ACTIVE SLOTS
   // ====================================================
   private getActiveSlots(fastingWindow: string): string[] {
@@ -432,7 +384,7 @@ export class DietGeneratorService {
   // ====================================================
   // PRIVATE: LOAD ELIGIBLE FOODS
   // ====================================================
-  private async loadEligibleFoods(dto: GenerateDietDto & { diseaseTags?: string[] }, template: any): Promise<FoodItem[]> {
+  private async loadEligibleFoods(dto: GenerateDietDto & { diseaseTags?: string[] }): Promise<FoodItem[]> {
     const allFoods: any[] = await (this.prisma as any).food.findMany({
       where: { isActive: true },
     });
@@ -440,7 +392,8 @@ export class DietGeneratorService {
     const diseaseTags = dto.diseaseTags || [];
     const allergens = dto.allergens || [];
     const dislikes = dto.foodDislikes || [];
-    const giCap = template?.giCap || (diseaseTags.includes('diabetes_t2') ? 55 : 100);
+    // Hard-coded GI cap (was template-driven). Tightens for diabetes; otherwise unrestricted.
+    const giCap = diseaseTags.includes('diabetes_t2') ? 55 : 100;
 
     return allFoods.filter((f: any) => {
       // Parse JSON fields if needed (MariaDB returns strings)
@@ -571,12 +524,11 @@ export class DietGeneratorService {
     dayTotals: { [day: string]: any },
     diseaseTags: string[],
     macroTargets: any,
-    template: any,
     violations: any[],
   ) {
-    const giCap = template?.giCap || (diseaseTags.includes('diabetes_t2') ? 55 : 100);
-    const saltCapG = template?.saltCapG || 5;
-    const addedSugarCapG = template?.addedSugarCapG ?? 5;
+    // Hard-coded caps (template-driven values were removed with the DietTemplate feature).
+    const giCap = diseaseTags.includes('diabetes_t2') ? 55 : 100;
+    const saltCapG = 5;
 
     // Check per-day kcal within ±15% of target
     for (const [day, totals] of Object.entries(dayTotals)) {

@@ -18,7 +18,6 @@ export class DietService {
       const chart = await (this.prisma as any).patientDietChart.create({
         data: {
           patientId: dto.patientId,
-          dietTemplateId: result.templateUsed || null,
           inputs: result.inputs,
           snapshot: result.snapshot,
           groceryList: result.groceryList,
@@ -80,7 +79,6 @@ export class DietService {
       data: {
         patientId: dto.patientId,
         doctorId: doctorId || null,
-        dietTemplateId: dto.dietTemplateId || null,
         inputs: dto.inputs || {},
         snapshot: dto.snapshot || {},
         groceryList: dto.groceryList || {},
@@ -119,7 +117,6 @@ export class DietService {
         select: {
           id: true, version: true, avgDailyKcal: true, avgDailyGi: true,
           notes: true, pdfUrl: true, whatsappSentAt: true, createdAt: true, updatedAt: true,
-          dietTemplateId: true,
         },
       }),
       (this.prisma as any).patientDietChart.count({ where: { patientId, isActive: true } }),

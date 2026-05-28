@@ -137,15 +137,6 @@ export const paymentsApi = {
   getRevenue: () => api.get('/api/payments/admin/revenue'),
 };
 
-// ==================== PRESCRIPTIONS ====================
-export const prescriptionsApi = {
-  create: (data: any) => api.post('/api/prescriptions', data),
-  getByCaseId: (caseId: string) => api.get(`/api/prescriptions/case/${caseId}`),
-  getMyPrescriptions: () => api.get('/api/prescriptions/patient'),
-  getById: (id: string) => api.get(`/api/prescriptions/${id}`),
-  downloadPdf: (id: string) => api.get(`/api/prescriptions/${id}/pdf`, { responseType: 'blob' }),
-};
-
 // ==================== REVIEWS ====================
 export const reviewsApi = {
   create: (appointmentId: string, data: { rating: number; reviewText?: string }) =>

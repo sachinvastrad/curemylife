@@ -1,7 +1,7 @@
 /**
  * Magic Diet — seed data
- * Sources: IFCT-2017 (foods), NIN-2024 guidelines (templates)
- * Stub seed: ~30 foods, ~10 recipes, ~5 templates, ~40 substitutions
+ * Sources: IFCT-2017 (foods), NIN-2024 guidelines
+ * Stub seed: ~30 foods, ~10 recipes, ~40 substitutions
  * Run: npx ts-node prisma/seed-diet.ts
  */
 import { PrismaClient } from '@prisma/client';
@@ -616,121 +616,6 @@ const RECIPES = [
   },
 ];
 
-// ===================== DIET TEMPLATES =====================
-const DIET_TEMPLATES = [
-  {
-    id: 'tmpl-diabetes-veg',
-    name: 'Diabetic Care — Vegetarian (NIN-2024)',
-    description: 'Low-GI vegetarian diet for Type 2 Diabetes management. Aligned with ICMR-NIN 2024 guidelines. GI cap 55, high fibre, no added sugar.',
-    dietType: 'VEG',
-    ageGroup: 'ADULT',
-    goal: 'diabetes_management',
-    conditionTags: ['diabetes_t2', 'pre_diabetes'],
-    cuisineRegions: ['north_indian', 'south_indian'],
-    targetKcal: 1600,
-    macroSplit: { carbs_pct: 50, protein_pct: 20, fat_pct: 30 },
-    proteinPerKg: 1.0,
-    giCap: 55,
-    saltCapG: 5,
-    addedSugarCapG: 0,
-    oilCapMl: 25,
-    waterTargetL: 2.5,
-    slotDistribution: { early_morning: 3, breakfast: 22, mid_morning: 8, lunch: 30, evening_snack: 10, dinner: 22, bedtime: 5 },
-    lifestyleNotes: 'Walk 30 minutes after lunch. Avoid late dinners. Eat at fixed times.',
-    supplementHints: 'Vitamin B12 (if vegetarian >5 years). Vitamin D if deficient.',
-    requiresDietitianReview: false,
-    source: 'NIN-2024',
-  },
-  {
-    id: 'tmpl-weight-loss-veg',
-    name: 'Weight Loss — Vegetarian (NIN-2024)',
-    description: '500 kcal deficit diet for safe, sustainable weight loss. High protein to preserve muscle. Aligned with ICMR-NIN 2024.',
-    dietType: 'VEG',
-    ageGroup: 'ADULT',
-    goal: 'weight_loss',
-    conditionTags: ['obesity', 'overweight'],
-    cuisineRegions: ['north_indian', 'south_indian', 'western_india'],
-    targetKcal: null, // calculated from TDEE
-    macroSplit: { carbs_pct: 45, protein_pct: 25, fat_pct: 30 },
-    proteinPerKg: 1.2,
-    giCap: 60,
-    saltCapG: 5,
-    addedSugarCapG: 5,
-    oilCapMl: 20,
-    waterTargetL: 3.0,
-    slotDistribution: { early_morning: 5, breakfast: 25, mid_morning: 5, lunch: 30, evening_snack: 10, dinner: 25, bedtime: 0 },
-    lifestyleNotes: 'No screen while eating. Eat slowly. Sleep 7–8 hours.',
-    supplementHints: 'Vitamin D. Magnesium if sleep is poor.',
-    requiresDietitianReview: false,
-    source: 'NIN-2024',
-  },
-  {
-    id: 'tmpl-heart-health-nonveg',
-    name: 'Heart Health — Non-Vegetarian (NIN-2024)',
-    description: 'DASH-Indian pattern for hypertension and cardiovascular health. Low sodium, low saturated fat, high potassium and omega-3.',
-    dietType: 'NON_VEG',
-    ageGroup: 'ADULT',
-    goal: 'heart_health',
-    conditionTags: ['hypertension', 'high_ldl', 'cardiovascular'],
-    cuisineRegions: ['south_indian', 'north_indian'],
-    macroSplit: { carbs_pct: 55, protein_pct: 18, fat_pct: 27 },
-    giCap: 60,
-    saltCapG: 4,
-    addedSugarCapG: 0,
-    oilCapMl: 20,
-    waterTargetL: 2.5,
-    slotDistribution: { early_morning: 5, breakfast: 20, mid_morning: 8, lunch: 30, evening_snack: 10, dinner: 22, bedtime: 5 },
-    avoidFoods: ['pickle', 'papad', 'processed_meat', 'coconut_oil_excess', 'ghee_excess'],
-    lifestyleNotes: 'Limit sodium including pickles and papad. Include omega-3 rich fish 2x/week.',
-    supplementHints: 'Omega-3 if fish intake insufficient. CoQ10 (optional).',
-    requiresDietitianReview: false,
-    source: 'NIN-2024',
-  },
-  {
-    id: 'tmpl-pcos-veg',
-    name: 'PCOS Management — Vegetarian (NIN-2024)',
-    description: 'Low-GI, anti-inflammatory vegetarian diet for PCOS. Supports insulin sensitivity and hormonal balance.',
-    dietType: 'VEG',
-    ageGroup: 'ADULT',
-    goal: 'pcos_management',
-    conditionTags: ['pcos', 'insulin_resistance', 'pre_diabetes'],
-    cuisineRegions: ['north_indian', 'south_indian'],
-    macroSplit: { carbs_pct: 40, protein_pct: 25, fat_pct: 35 },
-    proteinPerKg: 1.2,
-    giCap: 50,
-    saltCapG: 5,
-    addedSugarCapG: 0,
-    oilCapMl: 20,
-    waterTargetL: 2.5,
-    slotDistribution: { early_morning: 5, breakfast: 22, mid_morning: 8, lunch: 28, evening_snack: 10, dinner: 22, bedtime: 5 },
-    lifestyleNotes: 'Include omega-3 rich foods daily (flaxseed, walnuts). Reduce processed foods completely.',
-    supplementHints: 'Inositol (myo-inositol 4g/day if clinically indicated). Vitamin D. Zinc.',
-    requiresDietitianReview: false,
-    source: 'NIN-2024',
-  },
-  {
-    id: 'tmpl-pregnancy-t2t3-veg',
-    name: 'Pregnancy (T2/T3) — Vegetarian (NIN-2024)',
-    description: 'Calorie-surplus diet for second and third trimester pregnancy. High iron, folate, calcium. Vegetarian.',
-    dietType: 'VEG',
-    ageGroup: 'PREGNANT',
-    goal: 'pregnancy_nutrition',
-    conditionTags: ['pregnancy', 'anaemia'],
-    cuisineRegions: ['north_indian', 'south_indian', 'western_india'],
-    targetKcal: null, // TDEE + 350 (T2) / +450 (T3)
-    macroSplit: { carbs_pct: 55, protein_pct: 20, fat_pct: 25 },
-    proteinPerKg: 1.1,
-    saltCapG: 5,
-    oilCapMl: 25,
-    waterTargetL: 3.0,
-    slotDistribution: { early_morning: 5, breakfast: 20, mid_morning: 10, lunch: 28, evening_snack: 12, dinner: 20, bedtime: 5 },
-    lifestyleNotes: 'Eat iron-rich foods with Vitamin C source. Avoid raw papaya, pineapple, excess vitamin A supplements.',
-    supplementHints: 'Folic acid ≥600 µg. Iron 60 mg. Calcium 1200 mg. DHA 200 mg.',
-    requiresDietitianReview: false,
-    source: 'NIN-2024',
-  },
-];
-
 // ===================== FOOD SUBSTITUTIONS =====================
 const SUBSTITUTIONS = [
   // White rice → brown rice (diabetes)
@@ -789,18 +674,6 @@ async function main() {
     recipeCount++;
   }
   console.log(`✅ Seeded ${recipeCount} recipes`);
-
-  // ---- Diet Templates ----
-  let templateCount = 0;
-  for (const tmpl of DIET_TEMPLATES) {
-    await (prisma as any).dietTemplate.upsert({
-      where: { id: tmpl.id },
-      update: {},
-      create: tmpl,
-    });
-    templateCount++;
-  }
-  console.log(`✅ Seeded ${templateCount} diet templates`);
 
   // ---- Substitutions ----
   let subCount = 0;

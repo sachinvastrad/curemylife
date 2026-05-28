@@ -195,7 +195,7 @@ export default function PatientCaseDetailPage() {
             {canBook && (
               <div className="mt-6 pt-4 border-t flex flex-col md:flex-row items-center gap-4" style={{ borderColor: 'var(--border)' }}>
                 <div className="flex-1 text-xs" style={{ color: 'var(--text-muted)' }}>
-                  For a detailed discussion and official prescription, please book a consultation.
+                  For a detailed discussion and personalised guidance, please book a consultation.
                 </div>
                 <button className="btn btn-primary w-full md:w-auto" onClick={() => setShowBooking(true)}>
                   <Calendar className="w-4 h-4" /> Book Consultation

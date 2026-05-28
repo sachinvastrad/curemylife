@@ -20,9 +20,10 @@ import {
  * back-office use. Doctor role removed everywhere — the doctor surface for
  * Magic Diet has been retired (see frontend doctor/diet/* deletions).
  *
- * Patient-search and template-management endpoints removed entirely; the
- * generator still consults DietTemplate internally for dietary caps and
- * slot distribution, but template authoring is no longer a user feature.
+ * Patient-search, template-management endpoints, and the DietTemplate
+ * model itself have all been removed. The generator now uses hard-coded
+ * defaults for slot distribution and dietary caps (see DEFAULT_SLOT_DIST
+ * + the inline cap constants in diet-generator.service.ts).
  */
 @Controller('api/diet')
 @UseGuards(JwtAuthGuard)

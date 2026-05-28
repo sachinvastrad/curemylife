@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { ArrowRight, Shield, Stethoscope, Clock, Users, Star, ClipboardList } from 'lucide-react';
+import { ArrowRight, Shield, Stethoscope, Clock, Users, ClipboardList } from 'lucide-react';
 
 export default function HomePage() {
   return (
@@ -106,7 +106,6 @@ export default function HomePage() {
               { icon: Clock, title: 'Fast Turnaround', desc: 'Expert doctor review within 24-48 hours of submission' },
               { icon: Stethoscope, title: 'Full Case Taking', desc: 'Structured intake capturing constitutional profile, mental-emotional symptoms, modalities, and food preferences' },
               { icon: Users, title: 'Live Consultations', desc: 'Book video/audio consultations with your reviewing doctor for deeper case discussion and follow-ups' },
-              { icon: Star, title: 'E-Prescriptions', desc: 'Digital prescriptions with remedy, potency, dosage — compliant with CCH telemedicine guidelines' },
             ].map((f, i) => (
               <div key={i} className="card animate-in" style={{ animationDelay: `${i * 0.1}s` }}>
                 <f.icon className="w-8 h-8 mb-4" style={{ color: 'var(--primary-light)' }} />
@@ -130,7 +129,7 @@ export default function HomePage() {
               { step: '01', title: 'Submit Case', desc: 'Fill the structured homoeopathic intake form and upload lab reports' },
               { step: '02', title: 'Case Prepared', desc: 'Your structured case is organised and queued for expert review' },
               { step: '03', title: 'Doctor Review', desc: 'A verified BHMS/MD(Hom.) doctor reviews and adds expert commentary' },
-              { step: '04', title: 'Consultation', desc: 'Book a live consultation for deeper case discussion and prescription' },
+              { step: '04', title: 'Consultation', desc: 'Book a live consultation with your doctor for deeper case discussion and follow-up guidance' },
             ].map((s, i) => (
               <div key={i} className="text-center animate-in" style={{ animationDelay: `${i * 0.15}s` }}>
                 <div className="w-14 h-14 rounded-2xl mx-auto mb-4 flex items-center justify-center text-lg font-bold"
