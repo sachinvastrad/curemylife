@@ -164,10 +164,16 @@ export const servicesApi = {
 };
 
 export const serviceRequestsApi = {
+  // Patient
   create: (data: { serviceId: string; intakePayload: unknown; notes?: string }) =>
     api.post('/api/service-requests', data),
   getMine: () => api.get('/api/service-requests/my'),
   getById: (id: string) => api.get(`/api/service-requests/${id}`),
+
+  // Doctor
+  doctorQueue:    () => api.get('/api/service-requests/doctor/queue'),
+  doctorAssigned: () => api.get('/api/service-requests/doctor/assigned'),
+  accept: (id: string) => api.post(`/api/service-requests/${id}/accept`),
 };
 
 // ==================== ADMIN ====================

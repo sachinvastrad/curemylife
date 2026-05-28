@@ -109,15 +109,16 @@ model Doctor {
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
 
-  specialities     DoctorSpeciality[]
-  assignedCases    Case[]            @relation("AssignedDoctor")
-  doctorReports    DoctorReport[]
-  availability     DoctorAvailability[]
-  appointments     Appointment[]
-  paymentsReceived Payment[]
-  payouts          DoctorPayout[]
-  reviews          DoctorReview[]
-  onboardingDocs   DoctorDocument[]
+  specialities             DoctorSpeciality[]
+  assignedCases            Case[]              @relation("AssignedDoctor")
+  assignedServiceRequests  ServiceRequest[]    @relation("AssignedServiceDoctor")
+  doctorReports            DoctorReport[]
+  availability             DoctorAvailability[]
+  appointments             Appointment[]
+  paymentsReceived         Payment[]
+  payouts                  DoctorPayout[]
+  reviews                  DoctorReview[]
+  onboardingDocs           DoctorDocument[]
 
   @@map("doctors")
 }
@@ -691,21 +692,28 @@ model ServiceSpeciality {
 }
 
 model ServiceRequest {
-  id            String    @id @default(uuid())
-  serviceId     String
-  patientId     String
-  status        String    @default("draft") // draft, submitted, booked, completed, cancelled
-  intakePayload Json                          // matches Service.intakeFields shape
-  notes         String?   @db.Text
-  submittedAt   DateTime?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id               String    @id @default(uuid())
+  serviceId        String
+  patientId        String
+  // statuses: draft, submitted (in doctor queue), accepted (doctor claimed),
+  //           booked (slot picked), completed, cancelled
+  status           String    @default("draft")
+  intakePayload    Json                          // matches Service.intakeFields shape
+  notes            String?   @db.Text
+  assignedDoctorId String?
+  submittedAt      DateTime?
+  acceptedAt       DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
-  service       Service       @relation(fields: [serviceId], references: [id])
-  patient       Patient       @relation(fields: [patientId], references: [id])
-  appointments  Appointment[]
+  service          Service       @relation(fields: [serviceId], references: [id])
+  patient          Patient       @relation(fields: [patientId], references: [id])
+  assignedDoctor   Doctor?       @relation("AssignedServiceDoctor", fields: [assignedDoctorId], references: [id])
+  appointments     Appointment[]
 
   @@index([patientId])
   @@index([serviceId])
+  @@index([assignedDoctorId])
+  @@index([status])
   @@map("service_requests")
 }

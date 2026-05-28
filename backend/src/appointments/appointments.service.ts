@@ -31,11 +31,18 @@ export class AppointmentsService {
       if (!caseData) throw new NotFoundException('Case not found');
       if (caseData.patientId !== data.patientId) throw new BadRequestException('Access denied');
     } else if (data.serviceRequestId) {
-      // Verifies ownership + status, returns routing specialities for doctor-fit check
-      const { specialityIds } = await this.serviceRequests.claimForBooking(
+      // Verifies ownership + status, returns routing specialities + any
+      // pre-assigned doctor so we can enforce that the booking goes to the
+      // doctor who accepted the request (if there was an acceptance).
+      const { specialityIds, assignedDoctorId } = await this.serviceRequests.claimForBooking(
         data.serviceRequestId,
         data.patientId,
       );
+      if (assignedDoctorId && assignedDoctorId !== data.doctorId) {
+        throw new BadRequestException(
+          'This service request has been accepted by another doctor — please book with them',
+        );
+      }
       const fits = await this.prisma.doctorSpeciality.count({
         where: { doctorId: data.doctorId, specialityId: { in: specialityIds } },
       });

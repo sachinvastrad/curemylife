@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { ArrowLeft, CheckCircle2, Video, Phone, MapPin } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import DashboardLayout from '@/components/DashboardLayout';
-import { servicesApi, doctorsApi, appointmentsApi } from '@/lib/api';
+import { servicesApi, doctorsApi, appointmentsApi, serviceRequestsApi } from '@/lib/api';
 import type { ServiceDetail } from '@/lib/services-types';
 
 interface Doctor {
@@ -28,6 +28,7 @@ export default function ServiceBookingPage() {
   const [service, setService] = useState<ServiceDetail | null>(null);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
+  const [assignedDoctor, setAssignedDoctor] = useState<Doctor | null>(null);
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [slots, setSlots] = useState<Slot[]>([]);
   const [selectedSlot, setSelectedSlot] = useState<Slot | null>(null);
@@ -48,11 +49,27 @@ export default function ServiceBookingPage() {
     }
     (async () => {
       try {
-        const { data: svc } = await servicesApi.getBySlug(slug);
+        // Fetch service + the service-request in parallel so we can check
+        // whether a doctor has already accepted (in which case the patient
+        // must book with THAT doctor, not pick freely from the full list).
+        const [svcRes, srRes] = await Promise.all([
+          servicesApi.getBySlug(slug),
+          serviceRequestsApi.getById(serviceRequestId),
+        ]);
+        const svc = svcRes.data;
+        const sr = srRes.data;
         setService(svc);
-        const primarySpeciality = svc.specialities?.[0]?.id;
-        const { data: docs } = await doctorsApi.getPublicList(primarySpeciality);
-        setDoctors(docs);
+
+        if (sr.assignedDoctor) {
+          // Doctor has claimed this request → restrict to that doctor.
+          setAssignedDoctor(sr.assignedDoctor);
+          setSelectedDoctor(sr.assignedDoctor);
+          setDoctors([sr.assignedDoctor]);
+        } else {
+          const primarySpeciality = svc.specialities?.[0]?.id;
+          const { data: docs } = await doctorsApi.getPublicList(primarySpeciality);
+          setDoctors(docs);
+        }
       } catch (e) {
         console.error(e);
         router.push(`/patient/services/${slug}`);
@@ -141,7 +158,9 @@ export default function ServiceBookingPage() {
           Book your {service.name} consultation
         </h1>
         <p className="mb-6" style={{ color: 'var(--text-secondary)' }}>
-          Choose a doctor and a time that works for you.
+          {assignedDoctor
+            ? `Dr. ${assignedDoctor.name} accepted your request — pick a time that works.`
+            : 'Choose a doctor and a time that works for you.'}
         </p>
 
         {error && (
@@ -150,15 +169,38 @@ export default function ServiceBookingPage() {
           </div>
         )}
 
+        {assignedDoctor && (
+          <div
+            className="card mb-4 flex items-start gap-3"
+            style={{ background: 'rgba(14,124,107,0.1)', borderColor: 'var(--primary)' }}
+          >
+            <CheckCircle2 className="w-5 h-5 mt-0.5 shrink-0" style={{ color: 'var(--primary-light)' }} />
+            <div className="text-sm">
+              <div className="font-semibold" style={{ color: 'var(--text-primary)' }}>
+                Dr. {assignedDoctor.name} accepted your request
+              </div>
+              <div style={{ color: 'var(--text-secondary)' }}>
+                {assignedDoctor.qualifications}
+                {assignedDoctor.qualifications ? ' · ' : ''}
+                Pick a time below to confirm.
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Doctor list */}
         <section className="card mb-6">
           <h2 className="text-lg font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>
-            Select a doctor
+            {assignedDoctor ? 'Your doctor' : 'Select a doctor'}
           </h2>
           {doctors.length === 0 ? (
-            <p style={{ color: 'var(--text-secondary)' }}>
-              No doctors are currently available for this service. Please try again later.
-            </p>
+            <div style={{ color: 'var(--text-secondary)' }}>
+              <p>No doctors are currently available for this service.</p>
+              <p className="text-xs mt-2" style={{ color: 'var(--text-muted)' }}>
+                Your request is in the queue — a matching doctor will accept it shortly.
+                You&rsquo;ll be able to book a slot once that happens.
+              </p>
+            </div>
           ) : (
             <div className="grid sm:grid-cols-2 gap-3">
               {doctors.map((d) => {
