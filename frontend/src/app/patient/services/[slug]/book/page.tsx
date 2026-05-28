@@ -249,7 +249,18 @@ export default function ServiceBookingPage() {
             </div>
 
             {slots.length === 0 ? (
-              <p style={{ color: 'var(--text-secondary)' }}>No slots available for this date.</p>
+              <div
+                className="p-3 rounded-lg"
+                style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}
+              >
+                <p className="text-sm" style={{ color: 'var(--text-primary)' }}>
+                  No slots open on {new Date(date).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'short' })}.
+                </p>
+                <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+                  Dr. {selectedDoctor?.name} hasn&rsquo;t opened any booking times for this day of the week.
+                  Try another date, or pick a different doctor.
+                </p>
+              </div>
             ) : (
               <div className="flex flex-wrap gap-2">
                 {slots.map((s) => {
