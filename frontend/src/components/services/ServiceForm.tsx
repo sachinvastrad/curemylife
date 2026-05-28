@@ -1,8 +1,10 @@
 'use client';
 import { useEffect, useMemo, useState } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Eye, Pencil, ArrowRight, CheckCircle2 } from 'lucide-react';
+import * as Icons from 'lucide-react';
 import { specialitiesApi } from '@/lib/api';
 import IntakeBuilder from './IntakeBuilder';
+import IntakeFormRenderer from './IntakeFormRenderer';
 import type { FieldDef, HowItWorksStep, ServiceDetail } from '@/lib/services-types';
 
 interface Props {
@@ -48,6 +50,7 @@ export default function ServiceForm({ initial, submitting, submitLabel, onSubmit
   );
 
   const [specialities, setSpecialities] = useState<Speciality[]>([]);
+  const [mode, setMode] = useState<'edit' | 'preview'>('edit');
 
   useEffect(() => {
     specialitiesApi.listPublic()
@@ -87,6 +90,24 @@ export default function ServiceForm({ initial, submitting, submitLabel, onSubmit
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      <ModeSwitch mode={mode} onChange={setMode} />
+
+      {mode === 'preview' && (
+        <PatientPreview
+          name={name}
+          tagline={tagline}
+          description={description}
+          iconName={iconName}
+          cardImageUrl={cardImageUrl}
+          howItWorks={howItWorks}
+          inclusions={inclusions}
+          intakeFields={intakeFields}
+          specialities={specialities.filter((s) => specialityIds.includes(s.id))}
+        />
+      )}
+
+      {mode === 'edit' && (
+      <>
       <section className="card">
         <h2 className="text-lg font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>Basics</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -184,6 +205,8 @@ export default function ServiceForm({ initial, submitting, submitLabel, onSubmit
         </p>
         <IntakeBuilder fields={intakeFields} onChange={setIntakeFields} />
       </section>
+      </>
+      )}
 
       <div>
         <button
@@ -283,6 +306,197 @@ function SimpleListEditor({
       <button type="button" onClick={() => onChange([...items, ''])} className="btn btn-secondary btn-sm inline-flex">
         <Plus className="w-3 h-3" /> Add
       </button>
+    </div>
+  );
+}
+
+// ===================== EDIT / PREVIEW SWITCH =====================
+
+function ModeSwitch({
+  mode, onChange,
+}: { mode: 'edit' | 'preview'; onChange: (m: 'edit' | 'preview') => void }) {
+  return (
+    <div
+      className="inline-flex p-1 rounded-xl"
+      style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
+    >
+      {([
+        { v: 'edit',    label: 'Edit',    Icon: Pencil },
+        { v: 'preview', label: 'Preview', Icon: Eye },
+      ] as const).map(({ v, label, Icon }) => {
+        const on = mode === v;
+        return (
+          <button
+            key={v}
+            type="button"
+            onClick={() => onChange(v)}
+            className="px-4 py-1.5 rounded-lg text-sm font-medium inline-flex items-center gap-1.5 transition"
+            style={{
+              background: on ? 'linear-gradient(135deg, var(--primary), var(--primary-light))' : 'transparent',
+              color: on ? '#fff' : 'var(--text-secondary)',
+            }}
+          >
+            <Icon className="w-3.5 h-3.5" /> {label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// ===================== PATIENT PREVIEW =====================
+
+interface PreviewProps {
+  name: string;
+  tagline: string;
+  description: string;
+  iconName: string;
+  cardImageUrl: string;
+  howItWorks: HowItWorksStep[];
+  inclusions: string[];
+  intakeFields: FieldDef[];
+  specialities: { id: number; name: string }[];
+}
+
+/**
+ * Renders the patient-facing landing + intake exactly as patients would see
+ * them, using the in-memory form state. The intake form's submit is a no-op
+ * so admins can interact freely without saving.
+ */
+function PatientPreview({
+  name, tagline, description, iconName, cardImageUrl,
+  howItWorks, inclusions, intakeFields, specialities,
+}: PreviewProps) {
+  const Icon = (iconName && (Icons as any)[iconName]) || Icons.Stethoscope;
+
+  return (
+    <div className="space-y-4">
+      <div
+        className="card flex items-start gap-3"
+        style={{ background: 'rgba(245,158,11,0.08)', borderColor: '#f59e0b' }}
+      >
+        <Eye className="w-5 h-5 mt-0.5 shrink-0" style={{ color: '#f59e0b' }} />
+        <div className="text-sm">
+          <strong style={{ color: '#92400e' }}>Preview mode.</strong>{' '}
+          <span style={{ color: 'var(--text-secondary)' }}>
+            This is exactly what a patient sees. Form submission is disabled.
+            Switch to <strong>Edit</strong> to make changes, then <strong>Save</strong> to publish.
+          </span>
+        </div>
+      </div>
+
+      {/* Landing hero */}
+      <div className="card">
+        <div className="flex items-start gap-4 mb-4">
+          {cardImageUrl ? (
+            <div
+              className="w-14 h-14 rounded-xl bg-center bg-cover shrink-0"
+              style={{ backgroundImage: `url(${cardImageUrl})` }}
+            />
+          ) : (
+            <div
+              className="w-14 h-14 rounded-xl flex items-center justify-center shrink-0"
+              style={{ background: 'linear-gradient(135deg, var(--primary), var(--primary-light))' }}
+            >
+              <Icon className="w-7 h-7 text-white" />
+            </div>
+          )}
+          <div className="flex-1 min-w-0">
+            <h2 className="text-2xl md:text-3xl font-bold" style={{ color: 'var(--text-primary)' }}>
+              {name || <em style={{ color: 'var(--text-muted)' }}>Untitled service</em>}
+            </h2>
+            {tagline && (
+              <p className="mt-1" style={{ color: 'var(--text-secondary)' }}>{tagline}</p>
+            )}
+            {specialities.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mt-3">
+                {specialities.map((s) => (
+                  <span key={s.id} className="badge badge-primary text-xs">{s.name}</span>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {description && (
+          <p style={{ color: 'var(--text-secondary)', lineHeight: 1.7 }}>{description}</p>
+        )}
+
+        <button
+          type="button"
+          disabled
+          className="btn btn-primary btn-lg inline-flex mt-5"
+          title="Save the service before patients can use this CTA"
+        >
+          Opt for this service <ArrowRight className="w-4 h-4" />
+        </button>
+      </div>
+
+      {howItWorks.length > 0 && (
+        <div className="card">
+          <h3 className="text-lg font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>
+            How it works
+          </h3>
+          <ol className="space-y-3">
+            {howItWorks.map((s, i) => (
+              <li key={i} className="flex gap-3">
+                <div
+                  className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold shrink-0"
+                  style={{ background: 'rgba(14,124,107,0.15)', color: 'var(--primary-light)' }}
+                >
+                  {s.step ?? i + 1}
+                </div>
+                <div>
+                  <div className="font-medium" style={{ color: 'var(--text-primary)' }}>
+                    {s.title || <em style={{ color: 'var(--text-muted)' }}>Untitled step</em>}
+                  </div>
+                  {s.body && (
+                    <div className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>{s.body}</div>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
+
+      {inclusions.length > 0 && (
+        <div className="card">
+          <h3 className="text-lg font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>
+            What&rsquo;s included
+          </h3>
+          <ul className="space-y-2">
+            {inclusions.map((item, i) => (
+              <li key={i} className="flex gap-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
+                <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" style={{ color: 'var(--primary-light)' }} />
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Intake preview */}
+      <div className="card">
+        <h3 className="text-lg font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>
+          Intake form
+        </h3>
+        <p className="text-xs mb-4" style={{ color: 'var(--text-muted)' }}>
+          What the patient fills in after clicking the CTA.
+        </p>
+        {intakeFields.length === 0 ? (
+          <div className="text-sm" style={{ color: 'var(--text-muted)' }}>
+            <em>No fields configured yet.</em>
+          </div>
+        ) : (
+          <IntakeFormRenderer
+            fields={intakeFields}
+            submitLabel="Continue to booking"
+            disabledReason="Preview only — submission is disabled"
+            onSubmit={() => { /* no-op */ }}
+          />
+        )}
+      </div>
     </div>
   );
 }
