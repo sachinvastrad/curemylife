@@ -226,10 +226,29 @@ export class DoctorsService {
   }
 
   async approveDoctor(doctorId: string) {
-    return this.prisma.doctor.update({
+    const updated = await this.prisma.doctor.update({
       where: { id: doctorId },
       data: { status: 'approved', verifiedAt: new Date() },
     });
+
+    // Seed default Mon–Fri 09:00–17:00 availability if the doctor has none.
+    // Without this they're approved but invisible to the slot picker until
+    // they manually configure availability — a common stuck state.
+    const existing = await this.prisma.doctorAvailability.count({
+      where: { doctorId },
+    });
+    if (existing === 0) {
+      await this.prisma.doctorAvailability.createMany({
+        data: [1, 2, 3, 4, 5].map((dayOfWeek) => ({
+          doctorId, dayOfWeek,
+          startTime: '09:00', endTime: '17:00',
+          slotDurationMin: 30, bufferMin: 10,
+          isActive: true,
+        })),
+      });
+    }
+
+    return updated;
   }
 
   async rejectDoctor(doctorId: string, reason: string) {

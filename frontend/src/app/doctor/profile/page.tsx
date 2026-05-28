@@ -98,6 +98,21 @@ export default function DoctorProfilePage() {
     setAvailability([...availability, { dayOfWeek: 1, startTime: '09:00', endTime: '17:00', slotDurationMin: 30, bufferMin: 10 }]);
   };
 
+  /**
+   * One-click weekday template — replaces the in-memory list with Mon-Fri
+   * 09:00-17:00 (30-min slots, 10-min buffer). Save still required.
+   * Matches the default the backend now seeds on approval.
+   */
+  const applyWeekdayTemplate = () => {
+    const ok = availability.length === 0 ||
+      confirm('Replace current availability with Mon–Fri 09:00–17:00?');
+    if (!ok) return;
+    setAvailability([1, 2, 3, 4, 5].map((dayOfWeek) => ({
+      dayOfWeek, startTime: '09:00', endTime: '17:00',
+      slotDurationMin: 30, bufferMin: 10, isActive: true,
+    })));
+  };
+
   const removeSlot = (idx: number) => {
     setAvailability(availability.filter((_, i) => i !== idx));
   };
@@ -267,17 +282,36 @@ export default function DoctorProfilePage() {
 
         {activeTab === 'availability' && (
           <div className="card">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
               <h2 className="font-semibold">Weekly Availability</h2>
-              <button className="btn btn-ghost btn-sm flex items-center gap-1" onClick={addAvailabilitySlot}>
-                <Plus className="w-4 h-4" /> Add Slot
-              </button>
+              <div className="flex gap-2 flex-wrap">
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm flex items-center gap-1"
+                  onClick={applyWeekdayTemplate}
+                  title="One-click weekday template: Mon-Fri 09:00-17:00, 30-min slots"
+                >
+                  Use Mon–Fri 9–5 template
+                </button>
+                <button className="btn btn-ghost btn-sm flex items-center gap-1" onClick={addAvailabilitySlot}>
+                  <Plus className="w-4 h-4" /> Add Slot
+                </button>
+              </div>
             </div>
 
             {availability.length === 0 ? (
-              <p className="text-sm text-center py-8" style={{ color: 'var(--text-muted)' }}>
-                No availability slots set. Add your first slot.
-              </p>
+              <div className="text-center py-8">
+                <p className="text-sm mb-3" style={{ color: 'var(--text-muted)' }}>
+                  No availability set. Patients can&rsquo;t book consultations until you open at least one slot.
+                </p>
+                <button
+                  type="button"
+                  className="btn btn-primary inline-flex items-center gap-1"
+                  onClick={applyWeekdayTemplate}
+                >
+                  Use Mon–Fri 9–5 template
+                </button>
+              </div>
             ) : (
               <div className="space-y-3 mb-6">
                 {availability.map((slot, idx) => (
