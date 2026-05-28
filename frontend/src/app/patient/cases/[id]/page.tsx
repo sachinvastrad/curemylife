@@ -5,7 +5,7 @@ import { useAuth } from '@/lib/auth-context';
 import DashboardLayout from '@/components/DashboardLayout';
 import { casesApi, appointmentsApi, doctorsApi } from '@/lib/api';
 import { caseStatusLabel } from '@/lib/caseStatus';
-import { Loader2, FileText, Calendar, Clock, ArrowLeft, X, Video, Phone, Building2 } from 'lucide-react';
+import { Loader2, FileText, Calendar, Clock, ArrowLeft, X, Video, Phone, Building2, Printer } from 'lucide-react';
 import Link from 'next/link';
 
 const APPOINTMENT_TYPES = [
@@ -151,17 +151,27 @@ export default function PatientCaseDetailPage() {
         {/* Doctor's Report */}
         {caseData.status === 'report_ready' || doctorReport ? (
           <div className="card mb-6 border-l-4" style={{ borderColor: 'var(--primary)', background: 'var(--bg-dark)' }}>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: 'var(--primary)' }}>
-                <FileText className="w-5 h-5 text-white" />
+            <div className="flex items-center justify-between gap-3 mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: 'var(--primary)' }}>
+                  <FileText className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h2 className="font-semibold text-lg">Doctor's Second Opinion Report</h2>
+                  <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                    Reviewed by Dr. {caseData.assignedDoctor?.name} •{' '}
+                    {new Date(doctorReport?.createdAt || caseData.updatedAt).toLocaleDateString()}
+                  </p>
+                </div>
               </div>
-              <div>
-                <h2 className="font-semibold text-lg">Doctor's Second Opinion Report</h2>
-                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                  Reviewed by Dr. {caseData.assignedDoctor?.name} •{' '}
-                  {new Date(doctorReport?.createdAt || caseData.updatedAt).toLocaleDateString()}
-                </p>
-              </div>
+              <button
+                type="button"
+                onClick={() => window.open(`/print/case/${caseData.id}`, '_blank')}
+                className="btn btn-secondary btn-sm inline-flex shrink-0"
+                title="Open a printable / PDF-friendly version"
+              >
+                <Printer className="w-3.5 h-3.5" /> Print
+              </button>
             </div>
 
             <div className="space-y-4 text-sm" style={{ color: 'var(--text-secondary)' }}>
