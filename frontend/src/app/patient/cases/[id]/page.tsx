@@ -114,16 +114,26 @@ export default function PatientCaseDetailPage() {
           <ArrowLeft className="w-4 h-4" /> Back to Cases
         </Link>
 
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between gap-3 mb-6 flex-wrap">
           <div>
             <h1 className="text-2xl font-bold mb-1">Case {caseData.caseNumber}</h1>
             <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
               Submitted on {new Date(caseData.createdAt).toLocaleDateString()}
             </p>
           </div>
-          <span className="badge badge-primary capitalize text-sm px-3 py-1">
-            {caseStatusLabel(caseData.status)}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="badge badge-primary capitalize text-sm px-3 py-1">
+              {caseStatusLabel(caseData.status)}
+            </span>
+            <button
+              type="button"
+              onClick={() => window.open(`/print/case/${caseData.id}`, '_blank')}
+              className="btn btn-secondary btn-sm inline-flex"
+              title="Print or save your case as a PDF — works whether or not the doctor's report is ready"
+            >
+              <Printer className="w-3.5 h-3.5" /> Print / PDF
+            </button>
+          </div>
         </div>
 
         {/* Case Details */}
@@ -151,27 +161,17 @@ export default function PatientCaseDetailPage() {
         {/* Doctor's Report */}
         {caseData.status === 'report_ready' || doctorReport ? (
           <div className="card mb-6 border-l-4" style={{ borderColor: 'var(--primary)', background: 'var(--bg-dark)' }}>
-            <div className="flex items-center justify-between gap-3 mb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: 'var(--primary)' }}>
-                  <FileText className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h2 className="font-semibold text-lg">Doctor's Second Opinion Report</h2>
-                  <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                    Reviewed by Dr. {caseData.assignedDoctor?.name} •{' '}
-                    {new Date(doctorReport?.createdAt || caseData.updatedAt).toLocaleDateString()}
-                  </p>
-                </div>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: 'var(--primary)' }}>
+                <FileText className="w-5 h-5 text-white" />
               </div>
-              <button
-                type="button"
-                onClick={() => window.open(`/print/case/${caseData.id}`, '_blank')}
-                className="btn btn-secondary btn-sm inline-flex shrink-0"
-                title="Open a printable / PDF-friendly version"
-              >
-                <Printer className="w-3.5 h-3.5" /> Print
-              </button>
+              <div>
+                <h2 className="font-semibold text-lg">Doctor's Second Opinion Report</h2>
+                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                  Reviewed by Dr. {caseData.assignedDoctor?.name} •{' '}
+                  {new Date(doctorReport?.createdAt || caseData.updatedAt).toLocaleDateString()}
+                </p>
+              </div>
             </div>
 
             <div className="space-y-4 text-sm" style={{ color: 'var(--text-secondary)' }}>
