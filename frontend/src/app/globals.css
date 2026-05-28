@@ -256,6 +256,16 @@ select.input {
   animation: pulse-glow 2s ease-in-out infinite;
 }
 
+/* Skeleton loaders: subtle opacity breathe so blocks feel alive while waiting. */
+@keyframes skeleton-shimmer {
+  0%, 100% { opacity: 0.55; }
+  50%      { opacity: 0.95; }
+}
+.skeleton { animation: skeleton-shimmer 1.4s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .skeleton { animation: none; opacity: 0.7; }
+}
+
 /* Loading spinner */
 .spinner {
   width: 32px;

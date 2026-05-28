@@ -121,6 +121,7 @@ export default function PatientDietGeneratePage() {
   const { enabled: motionOn } = useMotion();
 
   const [step, setStep] = useState(0);
+  const directionRef = useRef<1 | -1>(1);   // +1 = forward, -1 = back; drives slide direction
   const [form, setForm] = useState<FormState>(DEFAULT_FORM);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState('');
@@ -157,13 +158,14 @@ export default function PatientDietGeneratePage() {
     }));
   }, [user]);
 
-  // Slide animation on step change
+  // Slide animation on step change — direction-aware (forward = from right, back = from left)
   useEffect(() => {
     if (!motionOn || !slideRef.current) return;
     registerGSAP();
+    const fromX = 28 * directionRef.current;
     const tween = gsap.fromTo(
       slideRef.current,
-      { x: 24, opacity: 0 },
+      { x: fromX, opacity: 0 },
       { x: 0, opacity: 1, duration: 0.45, ease: 'expo.out' },
     );
     return () => { tween.kill(); };
@@ -184,8 +186,24 @@ export default function PatientDietGeneratePage() {
     return true;
   }, [step, form.age, form.heightCm, form.weightKg]);
 
-  const next = () => { if (stepValid && step < STEPS.length - 1) setStep(step + 1); };
-  const prev = () => { if (step > 0) setStep(step - 1); };
+  const next = () => {
+    if (stepValid && step < STEPS.length - 1) {
+      directionRef.current = 1;
+      setStep(step + 1);
+    }
+  };
+  const prev = () => {
+    if (step > 0) {
+      directionRef.current = -1;
+      setStep(step - 1);
+    }
+  };
+  const jumpTo = (i: number) => {
+    if (i === step || i < 0 || i >= STEPS.length) return;
+    if (i > step) return;   // never jump forward beyond current step
+    directionRef.current = -1;
+    setStep(i);
+  };
 
   const submit = async () => {
     setGenerating(true);
@@ -235,7 +253,7 @@ export default function PatientDietGeneratePage() {
     <DashboardLayout>
       <div className="max-w-3xl mx-auto">
         <Header />
-        <Stepper step={step} onJump={(i) => i <= step + 1 && setStep(Math.min(i, step))} />
+        <Stepper step={step} onJump={jumpTo} />
         {error && (
           <div
             className="card mb-4 flex items-start gap-3"
@@ -373,9 +391,9 @@ function Stepper({ step, onJump }: { step: number; onJump: (i: number) => void }
               style={{
                 background: on ? 'rgba(14,124,107,0.15)' : 'transparent',
                 color: on ? 'var(--primary-light)' : done ? 'var(--text-secondary)' : 'var(--text-muted)',
-                cursor: i <= step + 1 ? 'pointer' : 'default',
+                cursor: done ? 'pointer' : 'default',
               }}
-              disabled={i > step + 1}
+              disabled={!done}
             >
               <div
                 className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-semibold"

@@ -11,6 +11,7 @@ import DashboardLayout from '@/components/DashboardLayout';
 import { dietApi } from '@/lib/api';
 import AnimatedNumber from '@/components/motion/AnimatedNumber';
 import MacroRing from '@/components/motion/MacroRing';
+import RevealText from '@/components/motion/RevealText';
 import { gsap, registerGSAP } from '@/lib/animation/gsap';
 import { useMotion } from '@/lib/animation/preferences';
 
@@ -64,7 +65,7 @@ export default function PatientDietPage() {
   if (authLoading || loading) {
     return (
       <DashboardLayout>
-        <div className="flex justify-center py-20"><div className="spinner" /></div>
+        <DietSkeleton />
       </DashboardLayout>
     );
   }
@@ -104,9 +105,12 @@ function Header({ hasCharts }: { hasCharts: boolean }) {
         <div className="inline-flex items-center gap-1.5 badge badge-primary mb-2">
           <Sparkles className="w-3 h-3" /> Magic Diet
         </div>
-        <h1 className="text-3xl md:text-4xl font-bold" style={{ color: 'var(--text-primary)' }}>
+        <RevealText
+          as="h1"
+          className="text-3xl md:text-4xl font-bold"
+        >
           Your meal plan
-        </h1>
+        </RevealText>
         <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
           A personalised 7-day Indian plan, built around you.
         </p>
@@ -236,6 +240,22 @@ function Hero({
   const proteinTarget = Math.max(80, protein);
   const carbTarget = Math.max(280, carb);
   const fatTarget = Math.max(70, fat);
+  const { enabled: motionOn } = useMotion();
+  const ringsRef = useRef<HTMLDivElement | null>(null);
+
+  // Stagger the macro rings in
+  useEffect(() => {
+    if (!motionOn || !ringsRef.current) return;
+    registerGSAP();
+    const ctx = gsap.context(() => {
+      gsap.from('[data-macro-ring]', {
+        y: 16, opacity: 0, scale: 0.9,
+        duration: 0.5, ease: 'expo.out',
+        stagger: 0.12, delay: 0.15,
+      });
+    }, ringsRef);
+    return () => ctx.revert();
+  }, [motionOn, plan.id]);
 
   return (
     <div
@@ -279,10 +299,10 @@ function Hero({
         </div>
 
         {/* Macro rings */}
-        <div className="flex gap-4">
-          <MacroRing value={protein} target={proteinTarget} label="Protein" unit="g" color="#22c55e" size={92} />
-          <MacroRing value={carb}    target={carbTarget}    label="Carbs"   unit="g" color="#f59e0b" size={92} />
-          <MacroRing value={fat}     target={fatTarget}     label="Fat"     unit="g" color="#a855f7" size={92} />
+        <div ref={ringsRef} className="flex gap-4">
+          <div data-macro-ring><MacroRing value={protein} target={proteinTarget} label="Protein" unit="g" color="#22c55e" size={92} /></div>
+          <div data-macro-ring><MacroRing value={carb}    target={carbTarget}    label="Carbs"   unit="g" color="#f59e0b" size={92} /></div>
+          <div data-macro-ring><MacroRing value={fat}     target={fatTarget}     label="Fat"     unit="g" color="#a855f7" size={92} /></div>
         </div>
       </div>
     </div>
@@ -449,6 +469,38 @@ function DayMeals({
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// ===================== GROCERY LIST =====================
+
+// ===================== SKELETON =====================
+
+function DietSkeleton() {
+  return (
+    <div className="max-w-6xl">
+      <div className="mb-8">
+        <div className="skeleton h-5 w-24 rounded mb-3" style={{ background: 'var(--bg-surface)' }} />
+        <div className="skeleton h-9 w-72 rounded-md" style={{ background: 'var(--bg-surface)' }} />
+        <div className="skeleton h-3 w-56 rounded mt-3" style={{ background: 'var(--bg-surface)' }} />
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_3fr] gap-6">
+        <div className="space-y-2">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="skeleton h-16 rounded-xl" style={{ background: 'var(--bg-card)' }} />
+          ))}
+        </div>
+        <div>
+          <div className="skeleton rounded-2xl p-6 mb-5 h-40" style={{ background: 'var(--bg-card)' }} />
+          <div className="skeleton h-10 w-80 rounded-xl mb-5" style={{ background: 'var(--bg-card)' }} />
+          <div className="space-y-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="skeleton card h-24" style={{ background: 'var(--bg-card)' }} />
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

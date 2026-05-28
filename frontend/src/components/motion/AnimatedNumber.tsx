@@ -21,6 +21,7 @@ export default function AnimatedNumber({
   value, duration = 1.1, decimals = 0, prefix = '', suffix = '', className, style,
 }: Props) {
   const ref = useRef<HTMLSpanElement | null>(null);
+  const currentRef = useRef<number>(0);   // remembers the last displayed value
   const { enabled } = useMotion();
   const fmt = (v: number) => `${prefix}${v.toFixed(decimals)}${suffix}`;
 
@@ -28,16 +29,20 @@ export default function AnimatedNumber({
     if (!ref.current) return;
     if (!enabled) {
       ref.current.textContent = fmt(value);
+      currentRef.current = value;
       return;
     }
     registerGSAP();
-    const obj = { n: 0 };
     const node = ref.current;
+    const obj = { n: currentRef.current };
     const tween = gsap.to(obj, {
       n: value,
       duration,
       ease: 'power2.out',
-      onUpdate: () => { if (node) node.textContent = fmt(obj.n); },
+      onUpdate: () => {
+        if (node) node.textContent = fmt(obj.n);
+        currentRef.current = obj.n;
+      },
     });
     return () => { tween.kill(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
