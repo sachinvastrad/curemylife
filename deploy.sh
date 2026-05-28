@@ -115,11 +115,18 @@ log "3/4  Install deps & build"
 ( cd backend
   npm ci
   npx prisma generate
-  # Applies additive schema changes (new tables, new columns, nullable flips).
-  # v1.1 adds: services, service_specialities, service_requests; makes
-  # appointments.caseId nullable + adds appointments.serviceRequestId.
-  npx prisma db push
-  npm run db:seed-diet          # upsert foods / recipes / templates (safe to re-run)
+  # Apply schema to MySQL. We use `db push` rather than migrations because
+  # this project does not maintain a migrations folder. Recent schema deltas:
+  #   v1.1 added : services, service_specialities, service_requests;
+  #                appointments.caseId nullable + serviceRequestId added
+  #   v1.2 dropped: prescriptions table; diet_templates table; and the
+  #                patient_diet_charts.dietTemplateId column
+  # `--accept-data-loss` is required because we remove models. Treat the
+  # schema file as the single source of truth: anything not in schema.prisma
+  # WILL be dropped. Never run this against a database holding data you
+  # care about without backing up first.
+  npx prisma db push --accept-data-loss
+  npm run db:seed-diet          # upsert foods + recipes + substitutions (safe to re-run)
   npm run build )               # -> backend/dist/main.js
 
 ( cd frontend
@@ -231,6 +238,13 @@ echo "Service Catalog (v1.1) is live:"
 echo "  Admin manage : $WEB_PUBLIC_URL/admin/services"
 echo "  Patient view : $WEB_PUBLIC_URL/patient/services"
 echo "  (Admin must create + enable at least one service before patients see anything.)"
+echo
+echo "Magic Diet (v1.2 — patient self-service):"
+echo "  Patient build : $WEB_PUBLIC_URL/patient/diet/generate"
+echo
+echo "Removed features (no longer present in this build):"
+echo "  - Prescriptions (entire feature retired)"
+echo "  - Diet templates (admin authoring + generator template selection)"
 echo
 echo "To start on boot (run ONCE, as root, the command pm2 prints):"
 echo "  pm2 startup"
