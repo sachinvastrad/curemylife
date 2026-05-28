@@ -108,8 +108,9 @@ export class ServiceRequestsService {
       orderBy: { createdAt: 'desc' },
       include: {
         service: { select: { id: true, slug: true, name: true, iconName: true } },
+        assignedDoctor: { select: { id: true, name: true, photoUrl: true, qualifications: true } },
         appointments: {
-          select: { id: true, scheduledDate: true, status: true },
+          select: { id: true, scheduledDate: true, scheduledStart: true, status: true },
           orderBy: { scheduledDate: 'desc' },
           take: 1,
         },
