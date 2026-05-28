@@ -194,10 +194,6 @@ export const adminApi = {
 
 // ==================== MAGIC DIET ====================
 export const dietApi = {
-  // Patients
-  searchPatients: (q: string) =>
-    api.get('/api/diet/patients/search', { params: { q } }),
-
   // Foods
   searchFoods: (q?: string, category?: string, veg?: string) =>
     api.get('/api/diet/foods', { params: { q, category, veg } }),
@@ -207,18 +203,9 @@ export const dietApi = {
   searchRecipes: (slot?: string, cuisine?: string) =>
     api.get('/api/diet/recipes', { params: { slot, cuisine } }),
 
-  // Templates
-  getTemplates: (goal?: string, diet?: string, age?: string, condition?: string) =>
-    api.get('/api/diet/templates', { params: { goal, diet, age, condition } }),
-  getTemplateById: (id: string) => api.get(`/api/diet/templates/${id}`),
-  createTemplate: (data: any) => api.post('/api/diet/templates', data),
-  updateTemplate: (id: string, data: any) => api.patch(`/api/diet/templates/${id}`, data),
-  cloneTemplate: (id: string, newName?: string) =>
-    api.post(`/api/diet/templates/${id}/clone`, { newName }),
-
-  // Generate
+  // Generate (patient self-service; backend forces patientId = req.user.sub for patient role)
   generate: (data: {
-    patientId: string;
+    patientId?: string;
     heightCm?: number;
     weightKg?: number;
     targetWeightKg?: number;
@@ -238,7 +225,6 @@ export const dietApi = {
     pregnancyStatus?: string;
     ayurvedicPrakriti?: string;
     persist?: boolean;
-    templateId?: string;
   }) => api.post('/api/diet/generate', data),
 
   // Swap

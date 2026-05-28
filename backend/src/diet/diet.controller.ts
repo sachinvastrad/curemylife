@@ -1,7 +1,7 @@
 import {
-  Controller, Get, Post, Put, Patch, Delete,
+  Controller, Get, Post, Patch, Delete,
   Param, Body, Query, Req, UseGuards,
-  BadRequestException,
+  BadRequestException, ForbiddenException,
 } from '@nestjs/common';
 import { DietService } from './diet.service';
 import { GeneratorResult } from './diet-generator.service';
@@ -13,19 +13,21 @@ import {
   SwapFoodDto,
 } from './dto/diet.dto';
 
+/**
+ * Magic Diet — patient self-service.
+ * v1 (doctor-driven) shipped first; v1.1 reshapes this so patients generate
+ * their own plans. Admin retained on all mutating endpoints for support /
+ * back-office use. Doctor role removed everywhere — the doctor surface for
+ * Magic Diet has been retired (see frontend doctor/diet/* deletions).
+ *
+ * Patient-search and template-management endpoints removed entirely; the
+ * generator still consults DietTemplate internally for dietary caps and
+ * slot distribution, but template authoring is no longer a user feature.
+ */
 @Controller('api/diet')
 @UseGuards(JwtAuthGuard)
 export class DietController {
   constructor(private dietService: DietService) {}
-
-  // ===================== PATIENT SEARCH =====================
-
-  @Get('patients/search')
-  @UseGuards(RolesGuard)
-  @Roles('doctor', 'admin')
-  async searchPatients(@Query('q') q = '') {
-    return this.dietService.searchPatients(q);
-  }
 
   // ===================== FOODS =====================
 
@@ -53,63 +55,26 @@ export class DietController {
     return this.dietService.searchRecipes(slot, cuisine);
   }
 
-  // ===================== TEMPLATES =====================
-
-  @Get('templates')
-  async getTemplates(
-    @Query('goal') goal?: string,
-    @Query('diet') dietType?: string,
-    @Query('age') ageGroup?: string,
-    @Query('condition') condition?: string,
-  ) {
-    return this.dietService.getTemplates(goal, dietType, ageGroup, condition);
-  }
-
-  @Get('templates/:id')
-  async getTemplateById(@Param('id') id: string) {
-    return this.dietService.getTemplateById(id);
-  }
-
-  @Post('templates')
-  @UseGuards(RolesGuard)
-  @Roles('doctor', 'admin')
-  async createTemplate(@Body() body: any, @Req() req: any) {
-    return this.dietService.createTemplate(body, req.user.sub);
-  }
-
-  @Patch('templates/:id')
-  @UseGuards(RolesGuard)
-  @Roles('doctor', 'admin')
-  async updateTemplate(@Param('id') id: string, @Body() body: any) {
-    return this.dietService.updateTemplate(id, body);
-  }
-
-  @Post('templates/:id/clone')
-  @UseGuards(RolesGuard)
-  @Roles('doctor', 'admin')
-  async cloneTemplate(
-    @Param('id') id: string,
-    @Body('newName') newName?: string,
-    @Req() req?: any,
-  ) {
-    return this.dietService.cloneTemplate(id, newName, req?.user?.sub);
-  }
-
   // ===================== GENERATE =====================
 
   @Post('generate')
   @UseGuards(RolesGuard)
-  @Roles('doctor', 'admin')
+  @Roles('patient', 'admin')
   async generate(@Body() dto: GenerateDietDto, @Req() req: any): Promise<GeneratorResult & { chartId?: string }> {
-    if (!dto.patientId) throw new BadRequestException('patientId is required');
-    return this.dietService.generate(dto);
+    // Patients can only generate plans for themselves — ignore any body-supplied
+    // patientId. Admin may target a specific patient (for support workflows).
+    const effective: GenerateDietDto = req.user.role === 'patient'
+      ? { ...dto, patientId: req.user.sub }
+      : dto;
+    if (!effective.patientId) throw new BadRequestException('patientId is required');
+    return this.dietService.generate(effective);
   }
 
   // ===================== SWAP =====================
 
   @Post('swap')
   @UseGuards(RolesGuard)
-  @Roles('doctor', 'admin')
+  @Roles('patient', 'admin')
   async swap(@Body() dto: SwapFoodDto) {
     return this.dietService.swap(dto);
   }
@@ -118,15 +83,22 @@ export class DietController {
 
   @Post('charts')
   @UseGuards(RolesGuard)
-  @Roles('doctor', 'admin')
+  @Roles('patient', 'admin')
   async saveChart(@Body() dto: SaveDietChartDto, @Req() req: any) {
-    return this.dietService.saveChart(dto, req.user.sub);
+    // Patients can only save charts for themselves
+    const payload = req.user.role === 'patient'
+      ? { ...dto, patientId: req.user.sub }
+      : dto;
+    return this.dietService.saveChart(payload, req.user.sub);
   }
 
   @Patch('charts/:id')
   @UseGuards(RolesGuard)
-  @Roles('doctor', 'admin')
-  async updateChart(@Param('id') id: string, @Body() body: any) {
+  @Roles('patient', 'admin')
+  async updateChart(@Param('id') id: string, @Body() body: any, @Req() req: any) {
+    if (req.user.role === 'patient') {
+      await this.assertChartOwnership(id, req.user.sub);
+    }
     return this.dietService.updateChart(id, body);
   }
 
@@ -144,14 +116,20 @@ export class DietController {
   }
 
   @Get('charts/:id')
-  async getChartById(@Param('id') id: string) {
+  async getChartById(@Param('id') id: string, @Req() req: any) {
+    if (req.user.role === 'patient') {
+      await this.assertChartOwnership(id, req.user.sub);
+    }
     return this.dietService.getChartById(id);
   }
 
   @Delete('charts/:id')
   @UseGuards(RolesGuard)
-  @Roles('doctor', 'admin')
-  async deleteChart(@Param('id') id: string) {
+  @Roles('patient', 'admin')
+  async deleteChart(@Param('id') id: string, @Req() req: any) {
+    if (req.user.role === 'patient') {
+      await this.assertChartOwnership(id, req.user.sub);
+    }
     return this.dietService.deleteChart(id);
   }
 
@@ -159,9 +137,12 @@ export class DietController {
 
   @Post('biomarkers')
   @UseGuards(RolesGuard)
-  @Roles('doctor', 'admin')
-  async createBiomarker(@Body() dto: CreateBiomarkerDto) {
-    return this.dietService.createBiomarker(dto);
+  @Roles('patient', 'admin')
+  async createBiomarker(@Body() dto: CreateBiomarkerDto, @Req() req: any) {
+    const payload = req.user.role === 'patient'
+      ? { ...dto, patientId: req.user.sub }
+      : dto;
+    return this.dietService.createBiomarker(payload);
   }
 
   @Get('biomarkers')
@@ -180,12 +161,21 @@ export class DietController {
 
   // ===================== PATIENT DIET PROFILE =====================
 
-  @Put('patient-profile/:patientId')
+  @Patch('patient-profile')
   @UseGuards(RolesGuard)
-  @Roles('doctor', 'admin', 'patient')
-  async updatePatientProfile(@Param('patientId') patientId: string, @Body() body: any, @Req() req: any) {
-    // Patients can only update their own profile
-    const pid = req?.user?.role === 'patient' ? req.user.sub : patientId;
-    return this.dietService.updatePatientDietProfile(pid, body);
+  @Roles('patient', 'admin')
+  async updatePatientProfile(@Body() body: any, @Req() req: any) {
+    const patientId = req.user.role === 'patient' ? req.user.sub : body.patientId;
+    if (!patientId) throw new BadRequestException('patientId is required');
+    return this.dietService.updatePatientDietProfile(patientId, body);
+  }
+
+  // ===================== INTERNAL =====================
+
+  private async assertChartOwnership(chartId: string, patientId: string) {
+    const chart = await this.dietService.getChartById(chartId);
+    if (chart.patientId !== patientId) {
+      throw new ForbiddenException('You do not have access to this diet chart');
+    }
   }
 }

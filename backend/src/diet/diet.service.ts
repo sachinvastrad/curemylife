@@ -33,22 +33,6 @@ export class DietService {
     return result;
   }
 
-  // ===================== PATIENT SEARCH =====================
-  async searchPatients(q: string) {
-    return this.prisma.patient.findMany({
-      where: {
-        isActive: true,
-        OR: [
-          { name: { contains: q } },
-          { phone: { contains: q } },
-          { email: { contains: q } },
-        ],
-      },
-      select: { id: true, name: true, phone: true, email: true, age: true, gender: true },
-      take: 20,
-    });
-  }
-
   // ===================== FOODS =====================
   async searchFoods(q?: string, category?: string, vegType?: string) {
     return (this.prisma as any).food.findMany({
@@ -82,43 +66,6 @@ export class DietService {
         ...(cuisine ? { cuisine } : {}),
       },
       take: 50,
-    });
-  }
-
-  // ===================== TEMPLATES =====================
-  async getTemplates(goal?: string, dietType?: string, ageGroup?: string, condition?: string) {
-    return (this.prisma as any).dietTemplate.findMany({
-      where: {
-        isActive: true,
-        ...(goal ? { goal } : {}),
-        ...(dietType ? { dietType } : {}),
-        ...(ageGroup ? { ageGroup } : {}),
-      },
-      orderBy: { createdAt: 'asc' },
-    });
-  }
-
-  async getTemplateById(id: string) {
-    const t = await (this.prisma as any).dietTemplate.findUnique({ where: { id } });
-    if (!t) throw new NotFoundException('Template not found');
-    return t;
-  }
-
-  async createTemplate(data: any, createdBy: string) {
-    return (this.prisma as any).dietTemplate.create({
-      data: { ...data, clinicId: createdBy, createdBy, source: 'Clinic-custom' },
-    });
-  }
-
-  async updateTemplate(id: string, data: any) {
-    return (this.prisma as any).dietTemplate.update({ where: { id }, data });
-  }
-
-  async cloneTemplate(id: string, newName?: string, clinicId?: string) {
-    const original = await this.getTemplateById(id);
-    const { id: _id, createdAt, updatedAt, ...rest } = original;
-    return (this.prisma as any).dietTemplate.create({
-      data: { ...rest, name: newName || `${original.name} (Copy)`, clinicId: clinicId || null, source: 'Clinic-custom' },
     });
   }
 

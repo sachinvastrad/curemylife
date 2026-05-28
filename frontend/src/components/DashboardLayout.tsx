@@ -27,8 +27,6 @@ const doctorNav: NavItem[] = [
   { href: '/doctor/queue', label: 'Case Queue', icon: ClipboardList },
   { href: '/doctor/cases', label: 'My Cases', icon: FileText },
   { href: '/doctor/appointments', label: 'Appointments', icon: Calendar },
-  { href: '/doctor/diet/generate', label: 'Magic Diet', icon: Zap },
-  { href: '/doctor/diet/templates', label: 'Diet Templates', icon: FileText },
   { href: '/doctor/earnings', label: 'Earnings', icon: CreditCard },
   { href: '/doctor/profile', label: 'Profile', icon: User },
 ];

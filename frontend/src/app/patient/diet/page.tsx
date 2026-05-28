@@ -4,7 +4,8 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import DashboardLayout from '@/components/DashboardLayout';
 import { dietApi } from '@/lib/api';
-import { Zap, Printer, Calendar, ChevronRight, Utensils } from 'lucide-react';
+import { Zap, Printer, Calendar, ChevronRight, Utensils, Plus } from 'lucide-react';
+import Link from 'next/link';
 
 const DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
 const DAY_LABELS: { [k: string]: string } = {
@@ -51,18 +52,28 @@ export default function PatientDietPage() {
   return (
     <DashboardLayout>
       <div className="animate-in">
-        <div className="flex items-center gap-2 mb-6">
-          <Zap className="w-5 h-5" style={{ color: 'var(--primary-light)' }} />
-          <h1 className="text-2xl font-bold">My Diet Plans</h1>
+        <div className="flex items-center justify-between gap-2 mb-6">
+          <div className="flex items-center gap-2">
+            <Zap className="w-5 h-5" style={{ color: 'var(--primary-light)' }} />
+            <h1 className="text-2xl font-bold">My Diet Plans</h1>
+          </div>
+          {charts.length > 0 && (
+            <Link href="/patient/diet/generate" className="btn btn-secondary inline-flex">
+              <Plus className="w-4 h-4" /> New plan
+            </Link>
+          )}
         </div>
 
         {charts.length === 0 ? (
           <div className="card text-center py-16">
             <Utensils className="w-16 h-16 mx-auto mb-4" style={{ color: 'var(--text-muted)' }} />
             <p className="text-lg font-medium mb-2">No diet plan yet</p>
-            <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-              Your doctor will generate a personalised 7-day meal plan for you.
+            <p className="text-sm mb-6" style={{ color: 'var(--text-muted)' }}>
+              Build a personalised 7-day Indian meal plan tailored to your goals, allergies, and lifestyle.
             </p>
+            <Link href="/patient/diet/generate" className="btn btn-primary inline-flex">
+              <Zap className="w-4 h-4" /> Build my diet plan
+            </Link>
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">

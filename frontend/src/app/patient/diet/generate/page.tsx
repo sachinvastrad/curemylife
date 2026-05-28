@@ -1,6 +1,6 @@
 'use client';
-import { useEffect, useState, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import DashboardLayout from '@/components/DashboardLayout';
 import { dietApi } from '@/lib/api';
@@ -54,25 +54,15 @@ const MEDICATIONS = [
   'statin', 'maoi', 'ppi', 'steroid', 'diuretic',
 ];
 const DISEASE_TAGS = [
-  // Endocrine
   { group: 'Endocrine', tags: ['diabetes_t2', 'pre_diabetes', 'hypothyroid', 'hyperthyroid', 'pcos', 'adrenal_disorder'] },
-  // Cardio
   { group: 'Cardiovascular', tags: ['hypertension', 'high_ldl', 'high_tg', 'heart_health', 'cardiovascular', 'post_mi'] },
-  // GI
   { group: 'Gastrointestinal', tags: ['ibs_d', 'ibs_c', 'gerd', 'ibd', 'fatty_liver', 'constipation'] },
-  // MSK
   { group: 'Musculoskeletal', tags: ['gout', 'arthritis', 'osteoporosis', 'osteoarthritis'] },
-  // Kidney
   { group: 'Kidney', tags: ['ckd_early', 'ckd_stage4', 'kidney_stone_oxalate', 'hyperkalemia'] },
-  // Blood
   { group: 'Haematology', tags: ['anaemia', 'iron_deficiency', 'b12_deficiency', 'vit_d_deficiency'] },
-  // Skin
   { group: 'Skin & Allergy', tags: ['eczema', 'psoriasis', 'urticaria', 'acne'] },
-  // Neuro
   { group: 'Neurological', tags: ['migraine', 'anxiety', 'insomnia'] },
-  // Oncology
   { group: 'Oncology', tags: ['cancer_support', 'post_chemo'] },
-  // Other
   { group: 'Other', tags: ['weight_loss', 'weight_gain', 'muscle_gain', 'general', 'pregnancy', 'elderly'] },
 ];
 const BIOMARKER_DEFS = [
@@ -93,8 +83,6 @@ const BIOMARKER_DEFS = [
 interface BiomarkerEntry { marker: string; value: string; unit: string; }
 
 interface FormState {
-  patientId: string;
-  patientName: string;
   age: number;
   gender: string;
   heightCm: number;
@@ -116,12 +104,9 @@ interface FormState {
   sleepHoursAvg: number;
   stressLevel: string;
   waterIntakeL: number;
-  persist: boolean;
 }
 
 const DEFAULT_FORM: FormState = {
-  patientId: '',
-  patientName: '',
   age: 35,
   gender: 'female',
   heightCm: 160,
@@ -143,7 +128,6 @@ const DEFAULT_FORM: FormState = {
   sleepHoursAvg: 7,
   stressLevel: 'moderate',
   waterIntakeL: 2,
-  persist: false,
 };
 
 // ===================== COLLAPSIBLE SECTION =====================
@@ -185,41 +169,43 @@ function BmiDisplay({ heightCm, weightKg }: { heightCm: number; weightKg: number
 
 // ===================== MAIN PAGE =====================
 
-function DietGenerateInner() {
+export default function PatientDietGeneratePage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
-  const searchParams = useSearchParams();
 
-  const [form, setForm] = useState<FormState>({
-    ...DEFAULT_FORM,
-    patientId: searchParams.get('patientId') || '',
-    patientName: searchParams.get('patientName') || '',
-    age: parseInt(searchParams.get('age') || '35'),
-    gender: searchParams.get('gender') || 'female',
-  });
+  const [form, setForm] = useState<FormState>(DEFAULT_FORM);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState('');
-  const [step, setStep] = useState(1); // 1=identity, 2=goal, 3=personalisation, 4=review
-  const [patientQuery, setPatientQuery] = useState('');
-  const [patientResults, setPatientResults] = useState<any[]>([]);
-  const [patientSearching, setPatientSearching] = useState(false);
 
   useEffect(() => {
-    if (!authLoading && (!user || user.role !== 'doctor')) router.push('/login');
-  }, [authLoading, user]);
+    if (!authLoading && (!user || user.role !== 'patient')) router.push('/login');
+  }, [authLoading, user, router]);
 
+  // Pre-fill from the authenticated patient profile (best-effort).
   useEffect(() => {
-    if (!patientQuery || patientQuery.length < 2) { setPatientResults([]); return; }
-    const timer = setTimeout(async () => {
-      setPatientSearching(true);
-      try {
-        const { data } = await dietApi.searchPatients(patientQuery);
-        setPatientResults(data);
-      } catch { setPatientResults([]); }
-      finally { setPatientSearching(false); }
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [patientQuery]);
+    if (!user || user.role !== 'patient') return;
+    const u = user as any;
+    setForm(f => ({
+      ...f,
+      age: u.age || f.age,
+      gender: u.gender || f.gender,
+      heightCm: u.heightCm || f.heightCm,
+      weightKg: u.currentWeightKg || f.weightKg,
+      targetWeightKg: u.targetWeightKg || f.targetWeightKg,
+      activityLevel: u.activityLevel || f.activityLevel,
+      dietType: u.dietType || f.dietType,
+      cuisineRegion: u.cuisineRegion || f.cuisineRegion,
+      budgetTier: u.budgetTier || f.budgetTier,
+      cookingTimeTier: u.cookingTimeTier || f.cookingTimeTier,
+      allergens: u.allergens || f.allergens,
+      fastingWindow: u.fastingWindow || f.fastingWindow,
+      pregnancyStatus: u.pregnancyStatus || f.pregnancyStatus,
+      ayurvedicPrakriti: u.ayurvedicPrakriti || f.ayurvedicPrakriti,
+      sleepHoursAvg: u.sleepHoursAvg || f.sleepHoursAvg,
+      stressLevel: u.stressLevel || f.stressLevel,
+      waterIntakeL: u.waterIntakeL || f.waterIntakeL,
+    }));
+  }, [user]);
 
   const set = (key: keyof FormState, value: any) => setForm(f => ({ ...f, [key]: value }));
 
@@ -231,12 +217,12 @@ function DietGenerateInner() {
   };
 
   const handleGenerate = async () => {
-    if (!form.patientId) { setError('Patient ID is required'); return; }
     setGenerating(true);
     setError('');
     try {
       const payload = {
-        patientId: form.patientId,
+        // patientId omitted — backend enforces req.user.sub for patient role
+        patientId: (user as any)?.sub || (user as any)?.id || '',
         age: form.age,
         gender: form.gender,
         heightCm: form.heightCm || undefined,
@@ -260,13 +246,12 @@ function DietGenerateInner() {
         sleepHoursAvg: form.sleepHoursAvg || undefined,
         stressLevel: form.stressLevel || undefined,
         waterIntakeL: form.waterIntakeL || undefined,
-        persist: form.persist,
+        persist: true,  // patient self-service always saves so they can view it later
       };
 
-      const { data } = await dietApi.generate(payload);
-      // Store result in sessionStorage to avoid URL length limits
-      sessionStorage.setItem('dietResult', JSON.stringify(data));
-      router.push(`/doctor/diet/output?patientId=${form.patientId}&patientName=${encodeURIComponent(form.patientName)}`);
+      await dietApi.generate(payload);
+      // The patient diet list page loads the latest chart automatically.
+      router.push('/patient/diet');
     } catch (e: any) {
       setError(e?.response?.data?.message || 'Generation failed. Please try again.');
     } finally {
@@ -274,7 +259,9 @@ function DietGenerateInner() {
     }
   };
 
-  if (authLoading) return <DashboardLayout><div className="flex justify-center py-20"><div className="spinner" /></div></DashboardLayout>;
+  if (authLoading) {
+    return <DashboardLayout><div className="flex justify-center py-20"><div className="spinner" /></div></DashboardLayout>;
+  }
 
   return (
     <DashboardLayout>
@@ -283,10 +270,11 @@ function DietGenerateInner() {
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-1">
             <Zap className="w-5 h-5" style={{ color: 'var(--primary-light)' }} />
-            <h1 className="text-2xl font-bold">Magic Diet Generator</h1>
+            <h1 className="text-2xl font-bold">Build my diet plan</h1>
           </div>
           <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-            Generate a personalised 7-day Indian meal plan in seconds
+            Answer a few questions and we&rsquo;ll generate a personalised 7-day Indian meal plan.
+            Fields are optional &mdash; the more you share, the better the plan.
           </p>
         </div>
 
@@ -297,54 +285,9 @@ function DietGenerateInner() {
           </div>
         )}
 
-        {/* Step 1 — Identity & Biometrics */}
-        <Section title="Patient & Biometrics" icon={User} defaultOpen={true}>
+        {/* About you */}
+        <Section title="About you" icon={User} defaultOpen={true}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="md:col-span-2">
-              <label className="label">Search Patient *</label>
-              {form.patientId ? (
-                <div className="input flex items-center justify-between">
-                  <span className="text-sm">{form.patientName} <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>({form.patientId.slice(0, 8)}…)</span></span>
-                  <button className="text-xs" style={{ color: 'var(--error)' }} onClick={() => { set('patientId', ''); set('patientName', ''); setPatientQuery(''); }}>✕ Clear</button>
-                </div>
-              ) : (
-                <div style={{ position: 'relative' }}>
-                  <input
-                    className="input"
-                    value={patientQuery}
-                    onChange={e => setPatientQuery(e.target.value)}
-                    placeholder="Type patient name or phone…"
-                  />
-                  {patientSearching && <div className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>Searching…</div>}
-                  {patientResults.length > 0 && (
-                    <div style={{
-                      position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50,
-                      background: 'var(--bg-card)', border: '1px solid var(--border)',
-                      borderRadius: 8, boxShadow: '0 8px 24px rgba(0,0,0,0.3)', maxHeight: 240, overflowY: 'auto',
-                    }}>
-                      {patientResults.map((p: any) => (
-                        <button key={p.id} className="w-full text-left px-4 py-2 text-sm hover:bg-white/5"
-                          onClick={() => {
-                            set('patientId', p.id);
-                            set('patientName', p.name);
-                            if (p.age) set('age', p.age);
-                            if (p.gender) set('gender', p.gender);
-                            setPatientResults([]);
-                            setPatientQuery('');
-                          }}>
-                          <span className="font-medium">{p.name}</span>
-                          <span className="ml-2 text-xs" style={{ color: 'var(--text-muted)' }}>{p.phone || p.email}</span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-            <div>
-              <label className="label">Patient Name</label>
-              <input className="input" value={form.patientName} onChange={e => set('patientName', e.target.value)} placeholder="Display name" />
-            </div>
             <div>
               <label className="label">Age</label>
               <input className="input" type="number" min={1} max={120} value={form.age} onChange={e => set('age', parseInt(e.target.value) || 35)} />
@@ -373,11 +316,11 @@ function DietGenerateInner() {
           </div>
         </Section>
 
-        {/* Step 2 — Goal & Context */}
-        <Section title="Goal, Diet Type & Activity" icon={Activity} defaultOpen={true}>
+        {/* Diet & activity */}
+        <Section title="Diet & activity" icon={Activity} defaultOpen={true}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="label">Diet Type</label>
+              <label className="label">Diet type</label>
               <div className="flex flex-wrap gap-2">
                 {DIET_TYPES.map(dt => (
                   <button key={dt} type="button"
@@ -390,17 +333,17 @@ function DietGenerateInner() {
               </div>
             </div>
             <div>
-              <label className="label">Activity Level</label>
+              <label className="label">Activity level</label>
               <select className="input" value={form.activityLevel} onChange={e => set('activityLevel', e.target.value)}>
                 {ACTIVITY_LEVELS.map(a => <option key={a.value} value={a.value}>{a.label}</option>)}
               </select>
             </div>
             <div>
-              <label className="label">Cuisine / Region</label>
+              <label className="label">Cuisine / region</label>
               <input className="input" value={form.cuisineRegion} onChange={e => set('cuisineRegion', e.target.value)} placeholder="e.g. south_indian, north_indian" />
             </div>
             <div>
-              <label className="label">Fasting Window</label>
+              <label className="label">Fasting window</label>
               <div className="flex flex-wrap gap-2">
                 {FASTING_WINDOWS.map(fw => (
                   <button key={fw} type="button"
@@ -419,7 +362,7 @@ function DietGenerateInner() {
               </select>
             </div>
             <div>
-              <label className="label">Max Cooking Time</label>
+              <label className="label">Max cooking time</label>
               <select className="input" value={form.cookingTimeTier} onChange={e => set('cookingTimeTier', e.target.value)}>
                 {COOKING_TIMES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
               </select>
@@ -427,10 +370,10 @@ function DietGenerateInner() {
           </div>
         </Section>
 
-        {/* Step 3 — Allergens */}
-        <Section title="Allergens & Food Preferences" icon={Utensils}>
+        {/* Allergens & preferences */}
+        <Section title="Allergies & food preferences" icon={Utensils}>
           <div className="mb-4">
-            <label className="label">Allergens</label>
+            <label className="label">Allergies</label>
             <div className="flex flex-wrap gap-2">
               {COMMON_ALLERGENS.map(a => (
                 <button key={a} type="button"
@@ -443,13 +386,16 @@ function DietGenerateInner() {
             </div>
           </div>
           <div>
-            <label className="label">Food Dislikes <span className="text-xs" style={{ color: 'var(--text-muted)' }}>comma-separated</span></label>
+            <label className="label">Foods you dislike <span className="text-xs" style={{ color: 'var(--text-muted)' }}>comma-separated</span></label>
             <input className="input" value={form.foodDislikes} onChange={e => set('foodDislikes', e.target.value)} placeholder="brinjal, bitter gourd, ..." />
           </div>
         </Section>
 
-        {/* Step 4 — Disease Tags */}
-        <Section title="Conditions & Disease Tags" icon={HeartPulse}>
+        {/* Health conditions */}
+        <Section title="Health conditions (optional)" icon={HeartPulse}>
+          <p className="text-xs mb-4" style={{ color: 'var(--text-muted)' }}>
+            Select any conditions you have. We&rsquo;ll adapt the plan accordingly.
+          </p>
           {DISEASE_TAGS.map(group => (
             <div key={group.group} className="mb-4">
               <p className="text-xs font-semibold mb-2" style={{ color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{group.group}</p>
@@ -467,8 +413,11 @@ function DietGenerateInner() {
           ))}
         </Section>
 
-        {/* Step 5 — Biomarkers */}
-        <Section title="Recent Biomarkers (auto-derives disease tags)" icon={FlaskConical}>
+        {/* Biomarkers */}
+        <Section title="Recent lab values (optional)" icon={FlaskConical}>
+          <p className="text-xs mb-3" style={{ color: 'var(--text-muted)' }}>
+            If you have recent reports, fill the values for sharper recommendations.
+          </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {BIOMARKER_DEFS.map((b, i) => (
               <div key={b.marker} className="flex items-center gap-2">
@@ -490,8 +439,8 @@ function DietGenerateInner() {
           </div>
         </Section>
 
-        {/* Step 6 — Medications */}
-        <Section title="Current Medications" icon={Info}>
+        {/* Medications */}
+        <Section title="Current medications (optional)" icon={Info}>
           <div className="flex flex-wrap gap-2">
             {MEDICATIONS.map(m => (
               <button key={m} type="button"
@@ -504,17 +453,17 @@ function DietGenerateInner() {
           </div>
         </Section>
 
-        {/* Step 7 — Constitutional */}
-        <Section title="Constitutional & Reproductive" icon={User}>
+        {/* Constitutional */}
+        <Section title="Pregnancy & constitution (optional)" icon={User}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="label">Pregnancy / Lactation</label>
+              <label className="label">Pregnancy / lactation</label>
               <select className="input" value={form.pregnancyStatus} onChange={e => set('pregnancyStatus', e.target.value)}>
                 {PREGNANCY_STATUSES.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
               </select>
             </div>
             <div>
-              <label className="label">Ayurvedic Prakriti</label>
+              <label className="label">Ayurvedic prakriti</label>
               <select className="input" value={form.ayurvedicPrakriti} onChange={e => set('ayurvedicPrakriti', e.target.value)}>
                 {AYURVEDIC_TYPES.map(a => <option key={a.value} value={a.value}>{a.label}</option>)}
               </select>
@@ -522,15 +471,15 @@ function DietGenerateInner() {
           </div>
         </Section>
 
-        {/* Step 8 — Lifestyle */}
-        <Section title="Lifestyle" icon={Activity}>
+        {/* Lifestyle */}
+        <Section title="Sleep & lifestyle" icon={Activity}>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="label">Sleep (hours/night)</label>
               <input className="input" type="number" min={4} max={12} step={0.5} value={form.sleepHoursAvg} onChange={e => set('sleepHoursAvg', parseFloat(e.target.value))} />
             </div>
             <div>
-              <label className="label">Stress Level</label>
+              <label className="label">Stress level</label>
               <select className="input" value={form.stressLevel} onChange={e => set('stressLevel', e.target.value)}>
                 <option value="low">Low</option>
                 <option value="moderate">Moderate</option>
@@ -538,7 +487,7 @@ function DietGenerateInner() {
               </select>
             </div>
             <div>
-              <label className="label">Water Intake (L/day)</label>
+              <label className="label">Water (L/day)</label>
               <input className="input" type="number" min={0.5} max={6} step={0.5} value={form.waterIntakeL} onChange={e => set('waterIntakeL', parseFloat(e.target.value))} />
             </div>
           </div>
@@ -546,7 +495,7 @@ function DietGenerateInner() {
 
         {/* Summary + Generate */}
         <div className="card mb-6">
-          <h3 className="font-semibold mb-3">Summary</h3>
+          <h3 className="font-semibold mb-3">Ready to go</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm mb-4">
             <div><span style={{ color: 'var(--text-muted)' }}>Diet:</span> <strong>{form.dietType}</strong></div>
             <div><span style={{ color: 'var(--text-muted)' }}>Activity:</span> <strong>{form.activityLevel}</strong></div>
@@ -561,33 +510,19 @@ function DietGenerateInner() {
               </div>
             )}
           </div>
-          <div className="flex items-center gap-3">
-            <label className="flex items-center gap-2 text-sm cursor-pointer">
-              <input type="checkbox" checked={form.persist} onChange={e => set('persist', e.target.checked)} />
-              Save chart to patient record
-            </label>
-          </div>
           <button
             onClick={handleGenerate}
-            disabled={generating || !form.patientId}
-            className="btn btn-primary w-full mt-4 flex items-center justify-center gap-2"
+            disabled={generating}
+            className="btn btn-primary w-full mt-2 flex items-center justify-center gap-2"
           >
             {generating ? (
-              <><div className="spinner" style={{ width: 18, height: 18 }} /> Generating...</>
+              <><div className="spinner" style={{ width: 18, height: 18 }} /> Building your plan…</>
             ) : (
-              <><Zap className="w-4 h-4" /> Generate 7-Day Diet Plan</>
+              <><Zap className="w-4 h-4" /> Generate my 7-day diet plan</>
             )}
           </button>
         </div>
       </div>
     </DashboardLayout>
-  );
-}
-
-export default function DietGeneratePage() {
-  return (
-    <Suspense fallback={<div className="flex justify-center py-20"><div className="spinner" /></div>}>
-      <DietGenerateInner />
-    </Suspense>
   );
 }
