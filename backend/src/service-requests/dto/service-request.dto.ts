@@ -1,12 +1,21 @@
-import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsObject, IsDefined } from 'class-validator';
+
+/**
+ * Notes on ValidationPipe interaction — same as service.dto.ts:
+ * forbidNonWhitelisted means every field needs at least one validator
+ * decorator. For `intakePayload` (free-shape JSON), we use @IsObject() to
+ * satisfy the pipe; the deep shape check (each key matches a FieldDef)
+ * happens server-side in `intake-validation.ts`.
+ */
 
 export class CreateServiceRequestDto {
   @IsString()
   @IsNotEmpty()
   serviceId: string;
 
-  // Validated server-side against the Service's intakeFields definition
-  intakePayload: unknown;
+  @IsDefined({ message: 'intakePayload is required' })
+  @IsObject({ message: 'intakePayload must be an object' })
+  intakePayload: Record<string, unknown>;
 
   @IsOptional()
   @IsString()
@@ -16,7 +25,8 @@ export class CreateServiceRequestDto {
 export class SubmitServiceRequestDto {
   // Allow updating the payload right before submit (single shot)
   @IsOptional()
-  intakePayload?: unknown;
+  @IsObject({ message: 'intakePayload must be an object' })
+  intakePayload?: Record<string, unknown>;
 
   @IsOptional()
   @IsString()
